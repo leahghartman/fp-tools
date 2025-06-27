@@ -8,9 +8,12 @@
 
 - **C++17 compatible compiler** (e.g., GCC 7+, Clang 7+, MSVC 2017+)
 - **Python 3** (for plotting and analysis scripts)  
-- **yaml-cpp** library for YAML parsing  
+- **yaml-cpp** library for YAML parsing 
+
   > *Note:* If you do not have yaml-cpp installed, the CMake build system will automatically download and build it for you.
+
 - **Python libraries** (e.g., `matplotlib`, `numpy`) for plotting  
+
   > *You can install Python dependencies via:*  
   > - **Recommended:** Create and activate a Conda or Mamba environment, then run:  
   >   ```bash
