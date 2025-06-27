@@ -1,0 +1,58 @@
+# Build directories
+/build/
+/bin/
+/out/
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# VSCode settings
+.vscode/
+
+# Mac OS metadata files
+.DS_Store
+
+# Compiled object files and libraries
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Python virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Coverage reports
+coverage/
+*.lcov
+
+# YAML-CPP downloaded source (if any, but usually CMake handles it)
+external/yaml-cpp/
+
+# Ignore IDE/project files (JetBrains, CLion, etc.)
+.idea/
+*.iml
+*.iws
+
+# Other editor files
+*~
+*.swp
+

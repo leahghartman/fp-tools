@@ -1,0 +1,16 @@
+input:
+  file: "../traj.xyz"
+  coord_type: "unwrapped" 
+  start_frame: 0
+  end_frame: 10
+  frame_interval: 1
+
+output:
+  path: "output"
+  verbosity: 1 
+  status_interval: 1
+
+analysis:
+  msd:
+    max_lag: 10
+    plot_format: "png"
