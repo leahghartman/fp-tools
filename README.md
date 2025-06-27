@@ -2,8 +2,6 @@
 
 `fp-tools` is an open-source toolkit for analyzing molecular dynamics (MD) simulations using first-passage time diagnostics. It is designed to provide a fast, flexible, and extensible analysis framework capable of working with large-scale trajectory data from formats such as LAMMPS, VASP, and XYZ.
 
----
-
 ## Quick Start
 
 ### Requirements
@@ -23,21 +21,21 @@
   >   pip install -r requirements.txt
   >   ```
 
----
-
 ### Build and Install
 
 If you have not downloaded ```fp-tools``` yet, please clone it from GitHub via
 
 ```bash
-git clone https://github.com/yourusername/fptools.git $HOME/src/fp-tools # or whatever path you prefer
+git clone https://github.com/leahghartman/fp-tools.git $HOME/src/fp-tools # or whatever path you prefer
 ```
 
 From the base of the ```fp-tools``` source directory, execute:
 
 ```bash
+# Configure project and dependencies
 cmake -S . -B build
 
+# Build project
 cmake --build build
 ```
 
