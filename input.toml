@@ -1,0 +1,48 @@
+[input]
+  file            = "testgr2.dump"
+  coord_type      = "unwrapped"
+  start_frame     = 0
+  end_frame       = 1000
+  frame_interval  = 1
+
+[output]
+  path            = "output"
+  verbosity       = 1
+  status_interval = 10
+
+[system]
+  type = "unknown"
+  temperature = 100
+  density = 1
+  dt = 1
+
+[analysis]
+  
+  [analyis.msd]
+    max_lag     = 200
+    plot_format = "png"
+
+  # [analysis.rdf]
+  #   num_bins    = 200
+  #   r_max       = 5
+  #   plot_format = "svg"
+  
+  # [analysis.mfpt]
+  #   dt = 1
+  #   dr = 1
+  #   r_max = 1
+  #   plot_dofr = true
+  #   plot_format = "png"
+
+  # [analysis.correlations]
+  #   files =    # two different files for each quantity, or one file with both?
+  #   velocity = true
+
+
+
+
+  
+
+# [analysis.correlation]
+# file = ""
+# quantity = ""
