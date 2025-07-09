@@ -1,10 +1,12 @@
 # CMake version requirement
-cmake_minimum_required(VERSION 3.17...4.0)
+cmake_minimum_required(VERSION 3.16)
 
 # Project information
 project(fp-tools LANGUAGES CXX)
 set(FPTOOLS_VERSION_MAJOR 1)
 set(FPTOOLS_VERSION_MINOR 0)
+
+add_compile_definitions(SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 # C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -18,6 +20,7 @@ option(USE_CUDA    "Enable CUDA support"    OFF)
 
 # ========= Include directories =========
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/ext)
 
 # ========= Source files and Executable Directory =========
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -62,12 +65,10 @@ if(USE_CUDA)
     endif()
 endif()
 
-# ========= YAML =========
-find_package(yaml-cpp REQUIRED)
-target_link_libraries(fptools PRIVATE yaml-cpp)
+# ========= FFTW =========
+
+#find_package(FFTW REQUIRED COMPONENTS DOUBLE)
+#target_link_libraries(fptools PRIVATE FFTW::Double)
 
 # ========= Optimization flags (optional) =========
 target_compile_options(fptools PRIVATE -O3 -Wall -Wno-comment)
-
-add_compile_definitions(SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-
