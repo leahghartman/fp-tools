@@ -6,7 +6,8 @@
 
 - [Quick Start](#quick-start)
     - [Build and Install](#build-and-install)
-    - [Usage](#basic-usage)
+    - [Add Executable to Path](#add-the-executable-to-your-path)
+    - [Basic Usage](#basic-usage)
 - [Input/Output Formats](#inputoutput-formats)
 - [Contributing](#contributing)
 - [License](#license)
@@ -17,10 +18,6 @@
 
 - **C++17 compatible compiler** (e.g., GCC 7+, Clang 7+, MSVC 2017+)
 - **Python 3** (for plotting and analysis scripts)  
-- **yaml-cpp** library for YAML parsing 
-
-  > *Note:* If you do not have yaml-cpp installed, the CMake build system will automatically download and build it for you.
-
 - **Python libraries** (e.g., `matplotlib`, `numpy`) for plotting  
 
   > *You can install Python dependencies via:*  
