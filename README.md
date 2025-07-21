@@ -19,8 +19,8 @@
 ### Requirements
 
 - **C++20 compatible compiler** (e.g., GCC 10+, Clang 11+, MSVC 2019+)
-- **CMake 3.15+** for build configuration
-- **Python 3.8+** for plotting and analysis scripts
+- **CMake 3.15+**
+- **Python 3.8+**
 
 #### Python Dependencies
 These are required to run the plotting scripts:
@@ -30,7 +30,7 @@ These are required to run the plotting scripts:
   > **Recommended setup:** 
   > Create and activate a virtual environment with Conda or Mamba:
   >   ```bash
-  >   conda create -n fptools python=3.10
+  >   conda create -n fptools
   >   conda activate fptools
   >   pip install -r requirements.txt
   >   ```  
@@ -122,16 +122,11 @@ All outputs are written to the current working directory by default. Each analys
 
 Contributions are welcome! If you'd like to report a bug, request a feature, or submit a pull request:
 
-- File an issue on the [GitLab issue tracker]()
+- File an issue on the [GitLab issue tracker](https://re-git.lanl.gov/fp-tools/-/issues/new)
 - Follow the code style used in the project
 - Include tests or validation where possible
 
 ##  License
 
 This project is licensed under the ____ license. See the [LICENSE](LICENSE) file for details.
-
-
-
-
-
 
