@@ -16,9 +16,8 @@
 
 ### Requirements
 
-#### C++ Build Environment
 - **C++20 compatible compiler** (e.g., GCC 10+, Clang 11+, MSVC 2019+)
-- CMake 3.15+ for build configuration
+- **CMake 3.15+** for build configuration
 - **Python 3.8+** for plotting and analysis scripts
 
 #### Python Dependencies
@@ -39,7 +38,7 @@ These are required to run the plotting scripts:
   >   pip install -r requirements.txt
   >   ```
 
-### Build and Install
+### 📦 Build and Install
 
 If you have not downloaded ```fp-tools``` yet, please clone it from GitHub via
 
@@ -75,26 +74,60 @@ source ~/.bashrc
 
 ### Basic Usage
 
-Run the tool with a YAML configuration file:
+Run the tool with a TOML configuration file:
 
 ```bash
-fptools config.yaml
+fptools config.toml
 ```
 If you have **not added** the executable to your PATH, run it by specifying the full or relative path to the executable. For example, if your executable is located in the ```build/bin``` directory inside the project root, run:
 
 ```bash
-./build/bin/fptools config.yaml
+./build/bin/fptools config.toml
 ```
 
 or with a full absolute path:
 
 ```bash
-$HOME/src/fp-tools/build/bin/fptools config.yaml
+$HOME/src/fp-tools/build/bin/fptools config.toml
 ```
 
----
+## 📈 Available Analyses
 
-## Input/Output Formats
+`fp-tools` currently supports the following diagnostics:
+
+
+
+## 📝 Input/Output Formats
+
+`fp-tools` uses a **TOML** configuration file to specify input files, system parameters, and analysis options. (MENTION EXAMPLE HERE)
+
+### Input Trajectories
+
+The tool currently supports the following trajectory formats:
+- **LAMMPS** (.dump **or** .lammpstrj)
+- **VASP** (XDATCAR)
+- **XYZ** (.xyz)
+
+Each frame **must** include:
+- Something here
+
+### Output Files
+
+All outputs are written to the current working directory by default. Each analysis type produces a `.dat` file with raw data, an optional plot for quick visualization, and a log output 
+
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to report a bug, request a feature, or submit a pull request:
+
+- File an issue on the [GitLab issue tracker]()
+- Follow the code style used in the project
+- Include tests or validation where possible
+
+##  License
+
+This project is licensed under the ____ license. See the [LICENSE](LICENSE) file for details.
+
 
 
 
