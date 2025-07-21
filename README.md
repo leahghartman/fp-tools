@@ -2,6 +2,8 @@
 
 `fp-tools` is an open-source toolkit for analyzing molecular dynamics (MD) simulations using first-passage time diagnostics. It is designed to provide a fast, flexible, and extensible analysis framework capable of working with large-scale trajectory data from formats such as LAMMPS, VASP, and XYZ.
 
+![til](/docs/imgs/demo.svg)
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
@@ -12,7 +14,7 @@
 - [Contributing](#contributing)
 - [License](#license)
 
-## Quick Start
+## 📦 Quick Start
 
 ### Requirements
 
@@ -38,7 +40,7 @@ These are required to run the plotting scripts:
   >   pip install -r requirements.txt
   >   ```
 
-### 📦 Build and Install
+### Build and Install
 
 If you have not downloaded ```fp-tools``` yet, please clone it from GitHub via
 
@@ -79,7 +81,7 @@ Run the tool with a TOML configuration file:
 ```bash
 fptools config.toml
 ```
-If you have **not added** the executable to your PATH, run it by specifying the full or relative path to the executable. For example, if your executable is located in the ```build/bin``` directory inside the project root, run:
+If you have **not** added the executable to your PATH, run it by specifying the full or relative path to the executable. For example, if your executable is located in the ```build/bin``` directory inside the project root, run:
 
 ```bash
 ./build/bin/fptools config.toml
