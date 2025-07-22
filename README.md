@@ -5,6 +5,9 @@
 [Contributing](#contributing) \|
 [License](#license)
 
+[Release](https://img.shields.io/badge/Release-0.1.0-purple)
+[License](https://img.shields.io/badge/License-MIT-blue)
+
 ![til](/docs/imgs/demo.svg)
 
 `fp-tools` is an open-source toolkit for analyzing molecular dynamics (MD) simulations using first-passage time diagnostics. It is designed to provide a fast, flexible, and extensible analysis framework capable of working with large-scale trajectory data from formats such as LAMMPS, VASP, and XYZ.
