@@ -14,7 +14,7 @@
 - [Contributing](#contributing)
 - [License](#license)
 
-## 📦 Quick Start
+## 📦 Quick Start <a name="quick-start"></a>
 
 ### Requirements
 
@@ -60,7 +60,7 @@ cmake --build build
 
 ### Add the Executable to Your PATH
 
-To run ```fp-tools``` from anywhere in your terminal, add the build output directory (where the executable resides) to your PATH environment variable.
+To run ```fp-tools``` from anywhere in your terminal, add the directory containing the executable (e.g., `build/bin`) to your PATH environment variable.
 
 For example, if the executable is in ```$HOME/src/fp-tools/build/bin```, you can add this to your shell profile:
 
@@ -93,7 +93,7 @@ or with a full absolute path:
 $HOME/src/fp-tools/build/bin/fptools config.toml
 ```
 
-## 📈 Available Analyses
+## 📈 Available Analyses <a name="available-analyses"></a>
 
 `fp-tools` supports several trajectory-based statistical analyses. Enable any of the following by specifying them in your configuration file under `[analysis]`:
 
@@ -109,7 +109,7 @@ Computes the average time it takes a particle to first reach a distance $r$ from
 * **Correlation Functions**\
 Includes built-in options for common time correlation functions as well as a black-box interface where users can provide two raw data files to compute cross-correlations or autocorrelations directly.
 
-## 📝 Input/Output Formats
+## 📝 Input/Output Formats <a name="inputoutput-formats"></a>
 
 `fp-tools` uses a **TOML** configuration file to specify input files, system parameters, and analysis options. You can find a sample configuration in the `examples/` directory to help you get started.
 
@@ -121,7 +121,7 @@ The tool currently supports the following trajectory formats:
 - **VASP** (`XDATCAR`)
 - **XYZ** (`.xyz`)
 
-Each frame must include atomic positions. Box dimensions can be provided separately if needed (as in the case of VASP's XDATCAR file format). Optionally, velocities can be included to enable calculations such as correlation functions.
+Each frame/timestep **must** include atomic positions. Box dimensions can be provided separately if needed (as in the case of VASP's XDATCAR file format). Optionally, velocities can be included to enable calculations such as correlation functions.
 
 ### Output Files
 
@@ -131,7 +131,7 @@ By default, all outputs are saved in the current working directory. For each ena
 - An optional plot for quick visualization,
 - A detailed log output documenting the analysis parameters and progress.
 
-## 🤝 Contributing
+## 🤝 Contributing <a name="contributing"></a>
 
 Contributions are welcome! If you'd like to report a bug, request a feature, or submit a pull request:
 
