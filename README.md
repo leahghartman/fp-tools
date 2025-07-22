@@ -97,19 +97,19 @@ $HOME/src/fp-tools/build/bin/fptools config.toml
 
 `fp-tools` supports several trajectory-based statistical analyses. Enable any of the following by specifying them in your configuration file under `[analysis]`:
 
-- **Mean Squared Displacement (MSD)**\
+* **Mean Squared Displacement (MSD)**\
 
 Computes the average squared displacement of particles as a function of lag time (i.e., the time interval between two positions along a trajectory, over which displacements are measured and averaged).
 
-- **Radial Distribution Function (RDF)**\
+* **Radial Distribution Function (RDF)**\
 
 Measures pairwise spatial correlations between atom types as a function of interparticle distance (highlights how particle density varies relative to a reference particle).
 
-- **Mean First Passage Time (MFPT) and D(r)**\
+* **Mean First Passage Time (MFPT) and D(r)**\
 
 Computes the average time it takes a particle to first reach a distance $r$ from its starting point. The logarithmic derivative $D(r)$ captures how this time scales with distance.
 
-- **Correlation Functions**\
+* **Correlation Functions**\
 
 Includes built-in options for common time correlation functions as well as a black-box interface where users can provide two raw data files to compute cross-correlations or autocorrelations directly.
 
