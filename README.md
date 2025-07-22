@@ -5,8 +5,8 @@
 [Contributing](#contributing) \|
 [License](#license)
 
-[Release](https://img.shields.io/badge/Release-0.1.0-purple)
-[License](https://img.shields.io/badge/License-MIT-blue)
+[![Release](https://img.shields.io/badge/Release-0.1.0-purple)]
+[![License](https://img.shields.io/badge/License-MIT-blue)]
 
 ![til](/docs/imgs/demo.svg)
 
