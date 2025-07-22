@@ -1,18 +1,29 @@
-# Welcome to FP-Tools!
+<h1 align="center">Welcome to FP-Tools!</h1>
 
-`fp-tools` is an open-source toolkit for analyzing molecular dynamics (MD) simulations using first-passage time diagnostics. It is designed to provide a fast, flexible, and extensible analysis framework capable of working with large-scale trajectory data from formats such as LAMMPS, VASP, and XYZ.
+[Quick Start Guide](#quick-start) \|
+[Input/Output Formats](#inputoutput-formats) \|
+[Contributing](#contributing) \|
+[License](#license)
 
 ![til](/docs/imgs/demo.svg)
 
-## Table of Contents
+`fp-tools` is an open-source toolkit for analyzing molecular dynamics (MD) simulations using first-passage time diagnostics. It is designed to provide a fast, flexible, and extensible analysis framework capable of working with large-scale trajectory data from formats such as LAMMPS, VASP, and XYZ.
 
-- [Quick Start](#quick-start)
-    - [Build and Install](#build-and-install)
-    - [Add Executable to Path](#add-the-executable-to-your-path)
-    - [Basic Usage](#basic-usage)
-- [Input/Output Formats](#inputoutput-formats)
-- [Contributing](#contributing)
-- [License](#license)
+## 📈 Features
+
+`fp-tools` supports several trajectory-based statistical analyses. Enable any of the following by specifying them in your configuration file under `[analysis]`:
+
+* **Mean Squared Displacement (MSD)**\
+Computes the average squared displacement of particles as a function of lag time (i.e., the time interval between two positions along a trajectory, over which displacements are measured and averaged).
+
+* **Radial Distribution Function (RDF)**\
+Measures pairwise spatial correlations between atom types as a function of interparticle distance (highlights how particle density varies relative to a reference particle).
+
+* **Mean First Passage Time (MFPT) and D(r)**\
+Computes the average time it takes a particle to first reach a distance $r$ from its starting point. The logarithmic derivative $D(r)$ captures how this time scales with distance.
+
+* **Correlation Functions**\
+Includes built-in options for common time correlation functions as well as a black-box interface where users can provide two raw data files to compute cross-correlations or autocorrelations directly.
 
 ## 📦 Quick Start <a name="quick-start"></a>
 
@@ -92,22 +103,6 @@ or with a full absolute path:
 ```bash
 $HOME/src/fp-tools/build/bin/fptools config.toml
 ```
-
-## 📈 Available Analyses <a name="available-analyses"></a>
-
-`fp-tools` supports several trajectory-based statistical analyses. Enable any of the following by specifying them in your configuration file under `[analysis]`:
-
-* **Mean Squared Displacement (MSD)**\
-Computes the average squared displacement of particles as a function of lag time (i.e., the time interval between two positions along a trajectory, over which displacements are measured and averaged).
-
-* **Radial Distribution Function (RDF)**\
-Measures pairwise spatial correlations between atom types as a function of interparticle distance (highlights how particle density varies relative to a reference particle).
-
-* **Mean First Passage Time (MFPT) and D(r)**\
-Computes the average time it takes a particle to first reach a distance $r$ from its starting point. The logarithmic derivative $D(r)$ captures how this time scales with distance.
-
-* **Correlation Functions**\
-Includes built-in options for common time correlation functions as well as a black-box interface where users can provide two raw data files to compute cross-correlations or autocorrelations directly.
 
 ## 📝 Input/Output Formats <a name="inputoutput-formats"></a>
 
