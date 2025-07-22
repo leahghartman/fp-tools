@@ -111,22 +111,25 @@ Includes built-in options for common time correlation functions as well as a bla
 
 ## 📝 Input/Output Formats
 
-`fp-tools` uses a **TOML** configuration file to specify input files, system parameters, and analysis options. (MENTION EXAMPLE HERE)
+`fp-tools` uses a **TOML** configuration file to specify input files, system parameters, and analysis options. You can find a sample configuration in the `examples/` directory to help you get started.
 
 ### Input Trajectories
 
 The tool currently supports the following trajectory formats:
-- **LAMMPS** (.dump **or** .lammpstrj)
-- **VASP** (XDATCAR)
-- **XYZ** (.xyz)
 
-Each frame **must** include:
-- Something here
+- **LAMMPS** (`.dump` or `.lammpstrj`)
+- **VASP** (`XDATCAR`)
+- **XYZ** (`.xyz`)
+
+Each frame must include atomic positions. Box dimensions can be provided separately if needed (as in the case of VASP's XDATCAR file format). Optionally, velocities can be included to enable calculations such as correlation functions.
 
 ### Output Files
 
-All outputs are written to the current working directory by default. Each analysis type produces a `.dat` file with raw data, an optional plot for quick visualization, and a log output 
+By default, all outputs are saved in the current working directory. For each enabled analysis, `fp-tools` generates:
 
+- A `.dat` file containing raw numerical data,
+- An optional plot for quick visualization,
+- A detailed log output documenting the analysis parameters and progress.
 
 ## 🤝 Contributing
 
