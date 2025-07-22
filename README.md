@@ -18,9 +18,9 @@
 
 ### Requirements
 
-- **C++20 compatible compiler** (e.g., GCC 10+, Clang 11+, MSVC 2019+)
 - **CMake 3.15+**
 - **Python 3.8+**
+- **C++20 compatible compiler** (e.g., GCC 10+, Clang 11+, MSVC 2019+)
 
 #### Python Dependencies
 These are required to run the plotting scripts:
@@ -95,9 +95,23 @@ $HOME/src/fp-tools/build/bin/fptools config.toml
 
 ## 📈 Available Analyses
 
-`fp-tools` currently supports the following diagnostics:
+`fp-tools` supports several trajectory-based statistical analyses. Enable any of the following by specifying them in your configuration file under `[analysis]`:
 
+- **Mean Squared Displacement (MSD)**
 
+Computes the average squared displacement of particles as a function of lag time (i.e., the time interval between two positions along a trajectory, over which displacements are measured and averaged).
+
+- **Radial Distribution Function (RDF)**
+
+Measures pairwise spatial correlations between atom types as a function of interparticle distance (highlights how particle density varies relative to a reference particle).
+
+- **Mean First Passage Time (MFPT) and D(r)**
+
+Computes the average time it takes a particle to first reach a distance $r$ from its starting point. The logarithmic derivative $D(r)$ captures how this time scales with distance.
+
+- **Correlation Functions**
+
+Includes built-in options for common time correlation functions as well as a black-box interface where users can provide two raw data files to compute cross-correlations or autocorrelations directly.
 
 ## 📝 Input/Output Formats
 
