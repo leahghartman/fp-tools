@@ -12,11 +12,24 @@
 */
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <system_error>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "core/math.h"
 #include "analysis/msd.h"
+#include "io/logger.h"
+
+#include <numeric>
+
+
+// Include OpenMP only if the user turns it on
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 /*
 * Constructor for MSDAccumulator
@@ -27,8 +40,12 @@
 * Parameters:
 *   - max_lag: maximum lag time (number of frames) to calculate MSD over
 */
-MSDAccumulator::MSDAccumulator(int max_lag)
-  : msd_sum(max_lag + 1, 0.0), counts(max_lag + 1, 0) {}
+MSDAccumulator::MSDAccumulator(int max_lag, int num_groups)
+  : finalized(false) {
+  msd_sum.resize(num_groups, std::vector<double>(max_lag + 1, 0.0));
+  counts.resize(num_groups, std::vector<int>(max_lag + 1, 0));
+}
+
 
 /*
 * Accumulate a squared displacement (dr2) for a given lag index.
@@ -40,12 +57,12 @@ MSDAccumulator::MSDAccumulator(int max_lag)
 *   - lag: index corresponding to the time lag
 *   - dr2: squared displacement for this lag
 */
-void MSDAccumulator::accumulate(int lag, double dr2) {
-  if (lag >= msd_sum.size()) {
-    throw std::runtime_error("MSDAccumulator::accumulate - Lag exceeds limit (max_lag)");
+void MSDAccumulator::accumulate(int group, int lag, double dr2) {
+  if (group >= msd_sum.size() || lag >= msd_sum[group].size()) {
+    throw std::runtime_error("MSDAccumulator::accumulate - Invalid group or lag index");
   }
-  msd_sum[lag] += dr2;
-  counts[lag] += 1;
+  msd_sum[group][lag] += dr2;
+  counts[group][lag] += 1;
 }
 
 /*
@@ -59,9 +76,11 @@ void MSDAccumulator::accumulate(int lag, double dr2) {
 */
 void MSDAccumulator::finalize() {
   if (finalized) return;
-  for (size_t i{0}; i < msd_sum.size(); ++i) {
-    if (counts[i] > 0) {
-      msd_sum[i] /= counts[i];
+  for (size_t g {0}; g < msd_sum.size(); ++g) {
+    for (size_t i {0}; i < msd_sum[g].size(); ++i) {
+      if (counts[g][i] > 0) {
+        msd_sum[g][i] /= counts[g][i];
+      }
     }
   }
   finalized = true;
@@ -78,21 +97,35 @@ void MSDAccumulator::finalize() {
 * Parameters:
 *   - output_file: path to the output file (e.g., "output/msd.dat")
 */
-void MSDAccumulator::write(const std::string& output_file) const {
-  std::ofstream out(output_file);
-  out << "# Lag MSD Count\n";
-  for (size_t i{0}; i < msd_sum.size(); ++i) {
-    out << i << " " << msd_sum[i] << " " << counts[i] << "\n";
+void MSDAccumulator::write(const std::string& base_filename,
+                           const std::vector<std::string>& group_labels,
+                           double dt) const {
+
+  for (size_t g = 0; g < msd_sum.size(); ++g) {
+    // Generate file name: e.g., base + "_1_2_3.dat"
+    std::string output_file = base_filename + "_" + group_labels[g] + ".dat";
+
+    std::ofstream out(output_file);
+    if (!out) {
+      throw std::runtime_error("Failed to open file for writing MSD");
+    }
+
+    out << "# Fp-Tools MSD data file\n";
+    out << "# Group: " << group_labels[g] << "\n";
+    out << "# Time\t|\tMSD\n";
+    out << std::scientific << std::setprecision(15);
+
+    for (size_t lag = 0; lag < msd_sum[g].size(); ++lag) {
+      double time = lag * dt;
+      double avg_msd = msd_sum[g][lag];
+      out << time << "\t" << avg_msd << "\n";
+    }
+
+    out.close();
   }
-  out.close();
 }
 
-// Initialize static variable to some default relative path:
-std::string MSDAccumulator::plot_dir = "src/plotting/";
 
-void MSDAccumulator::set_plot_dir(const std::string& dir) {
-  plot_dir = dir;
-}
 
 /*
 * Plot the MSD curve by calling an external Python script.
@@ -107,131 +140,120 @@ void MSDAccumulator::set_plot_dir(const std::string& dir) {
 *   - input_file: path to the MSD data file
 *   - format:     image format to generate
 */
-void MSDAccumulator::plot(const std::string& input_file, const std::string& format) const {
-  // Construct full script path by joining plotting_dir and script filename
-  //std::string script_path = plot_dir;
-  //if (!script_path.empty() && script_path.back() != '/') {
-    //script_path += '/';
-  //}
-  const std::string script_path = std::string(SOURCE_DIR) + "/src/plotting/plot_msd.py";
-  std::string command{"python3 " + script_path + " " + input_file + " " + format};
-  int result{std::system(command.c_str())};
+void MSDAccumulator::plot(const std::vector<std::vector<std::string>>& input_file_groups,
+                          const std::vector<std::vector<std::string>>& label_groups,
+                          const std::string& output_dir,
+                          const std::string& format) const {
+  const std::string script_path = std::string(SOURCE_DIR) + "/src/fp_plot.py";
 
-  if (result != 0) {
-    std::cerr << "Warning: Failed to execute MSD plotting script.\n";
-  }
-}
+  for (size_t i = 0; i < input_file_groups.size(); ++i) {
+    std::string command = "python3 " + script_path + " msd";
 
-// =========================================
-// ==          Accessor Methods           ==
-// =========================================
+    const auto& files = input_file_groups[i];
+    const auto& labels = label_groups[i];
 
-/*
-* Returns the vector of mean squared displacement values after finalization.
-* Declared const to prevent external modification.
-*/
-const std::vector<double>& MSDAccumulator::get_msd() const { return msd_sum; }
+    for (size_t j = 0; j < files.size(); ++j) {
+      command += " " + files[j] + " \"" + labels[j] + "\"";
+    }
 
-/*
-* Returns the vector of counts, i.e., the number of samples contributing to
-* each MSD value. Declared const to prevent external modification.
-*/
-const std::vector<int>& MSDAccumulator::get_counts() const { return counts; }
+    command += " " + output_dir + " " + format;
 
-// =========================================
-// ==         Validation Helpers          ==
-// =========================================
-
-/*
-* Validates that the frame list is not empty.
-*/
-void MSDAccumulator::validate_non_empty_frames(const std::vector<Frame>& frames) {
-  if (frames.empty()) {
-    throw std::runtime_error("MSD Calculation - No frames provided.");
-  }
-}
-
-/*
-* Validates that n_start and n_end define a valid frame range within
-* the given frames.
-*/
-void MSDAccumulator::validate_frame_range(const std::vector<Frame>& frames, int n_start, int n_end) {
-  if (n_start < 0 || n_end > static_cast<int>(frames.size()) || n_start >= n_end - 1) {
-    throw std::runtime_error("MSD Calculation - Invalid frame range");
-  }
-}
-
-/*
-* Validates that all frames contain the same number of atoms.
-*/
-void MSDAccumulator::validate_consistent_atom_counts(const std::vector<Frame>& frames) {
-  int num_atoms = static_cast<int>(frames[0].atoms.size());
-  for (const auto& frame : frames) {
-    if (static_cast<int>(frame.atoms.size()) != num_atoms) {
-      throw std::runtime_error("MSD Calculation - Inconsistent atom count across frames");
+    int result = std::system(command.c_str());
+    if (result != 0) {
+      std::cerr << "Warning: Failed to execute MSD plotting script for group " << i << ".\n";
     }
   }
 }
 
-// =========================================
-// ==         Main MSD Algorithm          ==
-// =========================================
+MSDAccumulator compute_msd(const std::vector<Frame>& frames,
+                           int max_lag,
+                           const std::vector<std::vector<std::string>>& groups,
+                           Logger* logger) {
+  if (frames.empty() || groups.empty()) return MSDAccumulator(0);
 
-/*
-* Compute the Mean Squared Displacement (MSD) from a series of frames.
-*
-* This function iterates over frame pairs separated by time lags and computes
-* squared displacements for each atom, accumulating results in an MSDAccumulator.
-*
-* Performs basic input validation:
-*   - Checks for empty frame list
-*   - Ensures consistent atom counts across frames
-*   - Clamps max_lag if it exceeds the available frame range
-*
-* Parameters:
-*   - frames:   vector of simulation frames (each containing atom positions)
-*   - n_start:  first frame index to include
-*   - n_end:    last frame index (exclusive) to include
-*   - max_lag:  maximum time lag to compute
-*
-* Returns:
-*   - MSDAccumulator with finalized MSD values
-*/
-MSDAccumulator compute_msd(const std::vector<Frame>& frames, int n_start, int n_end, int max_lag) {
-  MSDAccumulator::validate_non_empty_frames(frames);
-  MSDAccumulator::validate_frame_range(frames, n_start, n_end);
-  MSDAccumulator::validate_consistent_atom_counts(frames);
-  
-  int num_atoms = static_cast<int>(frames[0].atoms.size());
-
-  // Clamp max_lag if it exceeds the allowed range
-  int max_allowed_lag{n_end - n_start - 1};
+  int max_allowed_lag = static_cast<int>(frames.size()) - 1;
   if (max_lag <= 0 || max_lag > max_allowed_lag) {
     max_lag = max_allowed_lag;
   }
-  
-  MSDAccumulator accumulator{max_lag};
 
-  // Loop over lag times from 1 up to max_lag
-  for (int lag{1}; lag <= max_lag; ++lag) {
-    double sum_dr2{0.0};
-    double count{0};
+  MSDAccumulator accumulator(max_lag, static_cast<int>(groups.size()));
 
-    // Iterate over all valid frame pairs separated by 'lag'
-    for (int t{n_start}; t + lag < n_end; ++t) {
-      const Frame& f0{frames[t]};
-      const Frame& f1{frames[t + lag]};
+  // Build all atom trajectories once
+  std::unordered_map<int, std::vector<Atom>> atom_trajectories;
+  for (const Frame& frame : frames) {
+    for (const Atom& atom : frame.atoms) {
+      atom_trajectories[atom.id].push_back(atom);
+    }
+  }
 
-      // Compute squared displacement for each atom
-      for (int i{0}; i < num_atoms; ++i) {
-        double dr2 = squared_displacement(f1.atoms[i], f0.atoms[i]);
-        sum_dr2 += dr2;
-        count++;
+  std::size_t group_index = 0;
+  for (const auto& group : groups) {
+    if (group.size() == 1) {
+      // Single-type group: optimize by skipping unordered_set
+      const std::string& target_type = group[0];
+
+      // Pre-filter trajectories of this type
+      std::vector<const std::vector<Atom>*> matched_trajectories;
+      matched_trajectories.reserve(atom_trajectories.size());
+
+      for (const auto& [atom_id, traj] : atom_trajectories) {
+        if (!traj.empty() && traj[0].type == target_type) {
+          matched_trajectories.push_back(&traj);
+        }
+      }
+
+      std::size_t done = 0;
+      std::size_t total = matched_trajectories.size();
+
+      for (int idx = 0; idx < static_cast<int>(matched_trajectories.size()); ++idx) {
+        const auto& traj = *matched_trajectories[idx];
+        int N = static_cast<int>(traj.size());
+        for (int lag = 0; lag <= max_lag; ++lag) {
+          int n_valid = N - lag;
+          if (n_valid <= 0) continue;
+          for (int i = 0; i < n_valid; ++i) {
+            double dr2 = squared_displacement(traj[i + lag], traj[i]);
+            // thread-safe accumulate here (atomic or thread-local buffers)
+            accumulator.accumulate(group_index, lag, dr2);
+          }
+        }
+        if (++done % 10 == 0 || done == total) {
+          print_progress_bar(done, total, 40, "MSD (Group " + std::to_string(group_index) + ")", "particles");
+        }
+      }
+    } else {
+      std::unordered_set<std::string> type_set(group.begin(), group.end());
+
+      // Pre-filter trajectories that match any type in the group
+      std::vector<const std::vector<Atom>*> matched_trajectories;
+      matched_trajectories.reserve(atom_trajectories.size());
+
+      for (const auto& [atom_id, traj] : atom_trajectories) {
+        if (!traj.empty() && type_set.count(traj[0].type)) {
+          matched_trajectories.push_back(&traj);
+        }
+      }
+
+      std::size_t done = 0;
+      std::size_t total = matched_trajectories.size();
+
+      for (int idx = 0; idx < static_cast<int>(matched_trajectories.size()); ++idx) {
+        const auto& traj = *matched_trajectories[idx];
+        int N = static_cast<int>(traj.size());
+        for (int lag = 0; lag <= max_lag; ++lag) {
+          int n_valid = N - lag;
+          if (n_valid <= 0) continue;
+          for (int i = 0; i < n_valid; ++i) {
+            double dr2 = squared_displacement(traj[i + lag], traj[i]);
+            accumulator.accumulate(group_index, lag, dr2);
+          }
+        }
+        if (++done % 10 == 0 || done == total) {
+          print_progress_bar(done, total, 40, "MSD (Group " + std::to_string(group_index) + ")", "particles");
+        }
       }
     }
-    if (count > 0) {
-      accumulator.accumulate(lag, sum_dr2);
-    }
+    ++group_index;
   }
   accumulator.finalize();
   return accumulator;

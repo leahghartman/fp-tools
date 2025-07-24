@@ -1,4 +1,6 @@
 //  TODO: Finish documentation
+//  TODO: Make sure the parsing of types is correct
+//  TODO: Make sure all of the parsed values match base.h types
 
 /* 
 * -----------------------------------------------------------------------------

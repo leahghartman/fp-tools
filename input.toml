@@ -2,47 +2,67 @@
   file            = "testgr2.dump"
   coord_type      = "unwrapped"
   start_frame     = 0
-  end_frame       = 1000
+  end_frame       = 3999
   frame_interval  = 1
 
 [output]
   path            = "output"
-  verbosity       = 1
-  status_interval = 10
 
-[system]
+[properties]
   type = "unknown"
-  temperature = 100
+  units = ""
   density = 1
-  dt = 1
+  dt = 0.1
 
 [analysis]
   
-  [analyis.msd]
-    max_lag     = 200
+  [analysis.msd]
+    enabled     = false
+    max_lag     = 2000
+    groups      = [["C"], ["O"], ["O", "C"]]
+    plot_format = "svg"
+    curves = [
+      [  # Plot 1
+        { types = ["C"], label = "C" },
+        { types = ["2"], label = "2" }
+      ],
+      [  # Plot 2
+        { types = ["3"], label = "3" }
+      ]
+    ]
+
+  [analysis.rdf]
+    enabled     = true
+    num_bins    = 200
+    r_max       = 5
+    pairs       = [["3", "3"]]
+    plot_format = "svg"
+    curves = [
+      [  # Plot 1
+        { types = ["1", "2"], label = "1-2" },
+        { types = ["1"], label = "1" }
+      ],
+      [  # Plot 2
+        { types = ["1", "2"], label = "1-2" }
+      ]
+    ]
+
+  [analysis.mfpt]
+    enabled = false
+    dt = 0.05
+    dr = 0.01
+    r_max = 4
+    plot_dofr = true
+    plot_format = "svg"
+
+  [analysis.correlations]
+    enabled = false
     plot_format = "png"
+    
+    # Built-in correlation functions
+    builtin = ["vacf"]
 
-  # [analysis.rdf]
-  #   num_bins    = 200
-  #   r_max       = 5
-  #   plot_format = "svg"
-  
-  # [analysis.mfpt]
-  #   dt = 1
-  #   dr = 1
-  #   r_max = 1
-  #   plot_dofr = true
-  #   plot_format = "png"
-
-  # [analysis.correlations]
-  #   files =    # two different files for each quantity, or one file with both?
-  #   velocity = true
-
-
-
-
-  
-
-# [analysis.correlation]
-# file = ""
-# quantity = ""
+    # Generic pairwise correlations
+    custom = [
+      { name = "some_corr", files = ["something_a.dat", "something_b.dat"]},#, columns = [2, 2] },
+    ]
