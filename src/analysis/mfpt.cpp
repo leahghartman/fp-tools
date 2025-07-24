@@ -211,6 +211,76 @@ std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame>& frames,
   return fpt_accums;
 }
 
+// std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame>& frames,
+//                                         double dr,
+//                                         double r_max,
+//                                         double dt) {
+//     if (frames.empty()) return {};
+//
+//     const size_t n_bins = static_cast<size_t>(r_max / dr);
+//
+//     // One accumulator per bin
+//     std::vector<FPTAccumulator> accums;
+//     accums.reserve(n_bins);
+//     for (size_t i = 0; i < n_bins; ++i)
+//         accums.emplace_back(n_bins);  // assumes FPTAccumulator(num_bins)
+//
+//     // Map atom ID to its initial position (t = 0)
+//     const Frame& first_frame = frames[0];
+//     std::unordered_map<std::size_t, std::tuple<double, double, double>> r0_map;
+//     for (const auto& atom : first_frame.atoms)
+//         r0_map[atom.id] = {atom.x, atom.y, atom.z};
+//
+//     // For each atom, keep track of which bins it has crossed
+//     std::unordered_map<std::size_t, std::vector<bool>> crossed;
+//     for (const auto& [id, _] : r0_map)
+//         crossed[id] = std::vector<bool>(n_bins, false);
+//
+//     // Progress bar setup
+//     const size_t total = (frames.size() - 1) * first_frame.atoms.size();
+//     size_t processed = 0;
+//
+//     // Main loop over frames (excluding t=0)
+//     for (size_t t = 1; t < frames.size(); ++t) {
+//         double time = t * dt;
+//         const auto& atoms = frames[t].atoms;
+//
+//         for (const auto& atom : atoms) {
+//             ++processed;
+//             if (processed % 10 == 0 || processed == total)
+//                 print_progress_bar(processed, total, 40, "FPT accumulation");
+//
+//             auto r0_it = r0_map.find(atom.id);
+//             if (r0_it == r0_map.end()) continue;
+//
+//             const auto& [x0, y0, z0] = r0_it->second;
+//             double dx = atom.x - x0;
+//             double dy = atom.y - y0;
+//             double dz = atom.z - z0;
+//             double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+//
+//             size_t bin = static_cast<size_t>(dist / dr);
+//             if (bin >= n_bins) continue;
+//
+//             // If atom hasn't yet crossed this bin
+//             // if (!crossed[atom.id][bin]) {
+//             //     accums[bin].accumulate(bin, time);
+//             //     crossed[atom.id][bin] = true;
+//             // }
+//             if (dist > dr * (bin + 1)) {
+//               if (!crossed[atom.id][bin]) {
+//                 crossed[atom.id][bin] = true;
+//                 accums[bin].accumulate(bin, time);
+//               }
+//             }
+//         }
+//     }
+//
+//     std::cout << std::endl;
+//     return accums;
+// }
+
+
 // =============================================================================
 // ===                         Plotting Utilities                            ===
 // =============================================================================
