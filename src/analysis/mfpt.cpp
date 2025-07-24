@@ -344,10 +344,25 @@ void compute_dofr(const std::string& mfpt_file, const std::string& output_file) 
 
     if (r1 <= 0 || r2 <= 0 || t1 <= 0 || t2 <= 0) continue;
 
-    double derivative = (std::log(t2) - std::log(t1)) / (std::log(r2) - std::log(r1));
+    double log_r1 = std::log(r1);
+    double log_r2 = std::log(r2);
+    if (std::abs(log_r2 - log_r1) < 1e-6) continue;
+
+    double derivative = (std::log(t2) - std::log(t1)) / (log_r2 - log_r1);
     double r_mid = 0.5 * (r1 + r2);
     outfile << r_mid << " " << derivative << "\n";
   }
+
+  // for (size_t i = 1; i < r_vals.size(); ++i) {
+  //   double r1 = r_vals[i-1], t1 = t_vals[i-1];
+  //   double r2 = r_vals[i],   t2 = t_vals[i];
+  //
+  //   if (r1 <= 0 || r2 <= 0 || t1 <= 0 || t2 <= 0) continue;
+  //
+  //   double derivative = (std::log(t2) - std::log(t1)) / (std::log(r2) - std::log(r1));
+  //   double r_mid = 0.5 * (r1 + r2);
+  //   outfile << r_mid << " " << derivative << "\n";
+  // }
   outfile.close();
 }
 

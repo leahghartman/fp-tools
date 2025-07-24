@@ -63,7 +63,7 @@ def plot_log_derivative(log_file, output_dir, output_format="png"):
     r, dlog = data[:, 0], data[:, 1]
 
     plt.figure(figsize=(6, 4))
-    plt.xlim(0, 5)
+    #plt.xlim(0, 5)
     plt.plot(r, dlog, linestyle='-', color='tab:blue', label='D(r)')
     plt.xlabel(r"$r/a$")
     plt.ylabel(r"D(r)")
