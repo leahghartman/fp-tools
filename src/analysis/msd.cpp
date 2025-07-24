@@ -167,7 +167,7 @@ void MSDAccumulator::plot(const std::vector<std::vector<std::string>>& input_fil
 
 MSDAccumulator compute_msd(const std::vector<Frame>& frames,
                            int max_lag,
-                           const std::vector<std::vector<std::string>>& groups,
+                           std::vector<std::vector<std::string>> groups,
                            Logger* logger) {
   if (frames.empty() || groups.empty()) return MSDAccumulator(0);
 
@@ -186,6 +186,10 @@ MSDAccumulator compute_msd(const std::vector<Frame>& frames,
     }
   }
 
+  if (groups.empty()) {
+    groups.push_back({"__all__"});
+  }
+
   std::size_t group_index = 0;
   for (const auto& group : groups) {
     if (group.size() == 1) {
@@ -197,7 +201,7 @@ MSDAccumulator compute_msd(const std::vector<Frame>& frames,
       matched_trajectories.reserve(atom_trajectories.size());
 
       for (const auto& [atom_id, traj] : atom_trajectories) {
-        if (!traj.empty() && traj[0].type == target_type) {
+        if (!traj.empty() && (target_type == "__all__" || traj[0].type == target_type)) {
           matched_trajectories.push_back(&traj);
         }
       }

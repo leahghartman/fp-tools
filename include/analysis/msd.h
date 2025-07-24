@@ -109,6 +109,6 @@ private:
  */
 MSDAccumulator compute_msd(const std::vector<Frame>& frames, 
                            int max_lag = -1, 
-                           const std::vector<std::vector<std::string>>& groups = {},
+                           std::vector<std::vector<std::string>> groups = {},
                            Logger* logger = nullptr);
 
