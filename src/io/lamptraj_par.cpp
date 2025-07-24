@@ -103,10 +103,8 @@ bool LAMMPSTrajectory::next_frame(Frame& frame) {
     type_idx = column_index["type"];
   } else if (column_index.count("element")) {
     type_idx = column_index["element"];
-  } else {
-    // Could add more fallbacks or keep -1
-    std::cout << "Warning: no 'type' or 'element' column found, atom types will be 'unknown'.\n";
   }
+
   int x_idx    = find_coord_index("x");
   int y_idx    = find_coord_index("y");
   int z_idx    = find_coord_index("z");
