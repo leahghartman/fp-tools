@@ -91,6 +91,8 @@ private:
   std::vector<double> fpt_dist{};   ///< Averaged first-passage times per bin.
   int total_counts{0};              ///< Total number of first-passage samples.
   bool finalized{false};            ///< Indicates whether averages are finalized.
+  double r_min;
+  double r_max;
 };
 
 /**
