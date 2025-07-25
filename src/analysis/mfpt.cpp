@@ -77,6 +77,66 @@ int FPTAccumulator::get_total_counts() const { return total_counts; }
  * @param dr Radius bin width.
  * @param dt Time step between trajectory frames.
  */
+// void write_fpt(const std::string& mfpt_file,
+//                const std::string& fpt_dir,
+//                const std::vector<FPTAccumulator>& fpt_accums,
+//                double dr,
+//                double dt,
+//                double box_volume,
+//                size_t total_atoms) {
+//   std::ofstream mfpt_out(mfpt_file);
+//   mfpt_out << "# mean first passage time T(r) vs r\n";
+//   mfpt_out << "# 1) r , 2) MFPT , 3) t1 , 4) t2 , 5) counts\n";
+//
+//   double density = static_cast<double>(total_atoms) / box_volume;
+//   double a = std::cbrt(3.0 / (4.0 * M_PI * density));
+//   double tau_md = a / std::sqrt(0.9);
+//
+//
+//   // Loop through all radius thresholds
+//   for (size_t radius_idx{0}; radius_idx < fpt_accums.size(); ++radius_idx) {
+//     const auto& accum = fpt_accums[radius_idx];
+//     const auto& fpt_dist = accum.get_fpt_dist();
+//     int counts = accum.get_total_counts();
+//
+//     double r = dr * (radius_idx + 1);  // Midpoint radius for this bin
+//     double r_norm = r / a;
+//
+//     // Write individual F_r(t) probability distribution file for this radius
+//     std::string fpt_filename = fpt_dir + "/fpt_" + std::to_string(radius_idx + 1) + ".out";
+//     std::ofstream fpt_out(fpt_filename);
+//     fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r/a << "\n";
+//     fpt_out << "# 1) t , 2) F_r(t)\n";
+//     fpt_out << std::scientific << std::setprecision(15);
+//
+//     // Accumulate integrals for MFPT calculation
+//     double t0=0.0, t1=0.0, t2=0.0;
+//     for (size_t ibin=0; ibin<fpt_dist.size(); ++ibin) {
+//       double time = ((ibin+1) * dt) / tau_md;
+//       fpt_out << time << "\t" << frt << "\n";
+//
+//       std::vector<double> frt_norm(fpt_dist.size());
+//       double dt_md = dt / tau_md;
+//       frt_norm[ibin] = fpt_dist[ibin] / (counts * dt_md);
+//
+//       double frt = (counts > 0) ? normalized_frt[ibin] : 0.0;
+//
+//       t0 += frt * dt_md;                // Zeroth moment (normalization)
+//       t1 += time * frt * dt_md;         // First moment (mean)
+//       t2 += time * time * frt * dt_md;  // Second moment
+//     }
+//     fpt_out.close();
+//
+//     // Compute MFPT as <t> = t1 / t0
+//     double mfpt = (counts > 0 && t0 > 0) ? t1 / t0 : 0.0;
+//
+//     // Write summary entry to mfpt.dat
+//     mfpt_out << std::scientific << std::setprecision(15)
+//              << r_norm << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
+//   }
+//   mfpt_out.close();
+// }
+
 void write_fpt(const std::string& mfpt_file,
                const std::string& fpt_dir,
                const std::vector<FPTAccumulator>& fpt_accums,
@@ -86,53 +146,51 @@ void write_fpt(const std::string& mfpt_file,
                size_t total_atoms) {
   std::ofstream mfpt_out(mfpt_file);
   mfpt_out << "# mean first passage time T(r) vs r\n";
-  mfpt_out << "# 1) r , 2) MFPT , 3) t1 , 4) t2 , 5) counts\n";
+  mfpt_out << "# 1) r/a , 2) MFPT , 3) t1 , 4) t2 , 5) counts\n";
 
   double density = static_cast<double>(total_atoms) / box_volume;
   double a = std::cbrt(3.0 / (4.0 * M_PI * density));
   double tau_md = a / std::sqrt(0.9);
 
-
-  // Loop through all radius thresholds
   for (size_t radius_idx{0}; radius_idx < fpt_accums.size(); ++radius_idx) {
     const auto& accum = fpt_accums[radius_idx];
     const auto& fpt_dist = accum.get_fpt_dist();
     int counts = accum.get_total_counts();
 
-    double r = dr * (radius_idx + 1);  // Midpoint radius for this bin
+    double r = dr * (radius_idx + 1);
     double r_norm = r / a;
 
-    // Write individual F_r(t) probability distribution file for this radius
     std::string fpt_filename = fpt_dir + "/fpt_" + std::to_string(radius_idx + 1) + ".out";
     std::ofstream fpt_out(fpt_filename);
-    fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r/a << "\n";
+    fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r_norm << "\n";
     fpt_out << "# 1) t , 2) F_r(t)\n";
     fpt_out << std::scientific << std::setprecision(15);
 
-    // Accumulate integrals for MFPT calculation
-    double t0=0.0, t1=0.0, t2=0.0;
-    for (size_t ibin=0; ibin<fpt_dist.size(); ++ibin) {
-      double time = ((ibin+1) * dt) / tau_md;
-      double frt = fpt_dist[ibin];
+    double t0 = 0.0, t1 = 0.0, t2 = 0.0;
+    double dt_md = dt / tau_md;
+
+    for (size_t ibin = 0; ibin < fpt_dist.size(); ++ibin) {
+      double time = ((ibin + 1) * dt) / tau_md;
+      double raw_frt = fpt_dist[ibin];
+      double frt = (counts > 0) ? raw_frt / (counts * dt_md) : 0.0;
+
       fpt_out << time << "\t" << frt << "\n";
 
-      double dt_md = dt / tau_md;
-
-      t0 += frt * dt_md;                // Zeroth moment (normalization)
-      t1 += time * frt * dt_md;         // First moment (mean)
-      t2 += time * time * frt * dt_md;  // Second moment
+      t0 += frt * dt_md;
+      t1 += time * frt * dt_md;
+      t2 += time * time * frt * dt_md;
     }
     fpt_out.close();
 
-    // Compute MFPT as <t> = t1 / t0
     double mfpt = (counts > 0 && t0 > 0) ? t1 / t0 : 0.0;
 
-    // Write summary entry to mfpt.dat
     mfpt_out << std::scientific << std::setprecision(15)
              << r_norm << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
   }
   mfpt_out.close();
 }
+
+
 
 // =============================================================================
 // ===               Compute FPT Distributions over Trajectory               ===
