@@ -45,15 +45,15 @@ void FPTAccumulator::accumulate(int bin_index, double fpt) {
 void FPTAccumulator::finalize(double dt) {
   if (finalized) return; // Prevent double-finalization
 
-  fpt_dist.resize(counts.size(), 0.0);
-  total_counts = 0;
-  for (int c : counts) total_counts += c; // Sum over all lag bins
-
-  if (total_counts > 0) {
-    for (size_t i{0}; i < counts.size(); ++i) {
-      fpt_dist[i] = counts[i] / (total_counts * dt);  // Normalize to PDF
-    }
-  }
+  // fpt_dist.resize(counts.size(), 0.0);
+  // total_counts = 0;
+  // for (int c : counts) total_counts += c; // Sum over all lag bins
+  //
+  // if (total_counts > 0) {
+  //   for (size_t i{0}; i < counts.size(); ++i) {
+  //     fpt_dist[i] = counts[i] / (total_counts * dt);  // Normalize to PDF
+  //   }
+  // }
   finalized = true;
 }
 
@@ -77,65 +77,6 @@ int FPTAccumulator::get_total_counts() const { return total_counts; }
  * @param dr Radius bin width.
  * @param dt Time step between trajectory frames.
  */
-// void write_fpt(const std::string& mfpt_file,
-//                const std::string& fpt_dir,
-//                const std::vector<FPTAccumulator>& fpt_accums,
-//                double dr,
-//                double dt,
-//                double box_volume,
-//                size_t total_atoms) {
-//   std::ofstream mfpt_out(mfpt_file);
-//   mfpt_out << "# mean first passage time T(r) vs r\n";
-//   mfpt_out << "# 1) r , 2) MFPT , 3) t1 , 4) t2 , 5) counts\n";
-//
-//   double density = static_cast<double>(total_atoms) / box_volume;
-//   double a = std::cbrt(3.0 / (4.0 * M_PI * density));
-//   double tau_md = a / std::sqrt(0.9);
-//
-//
-//   // Loop through all radius thresholds
-//   for (size_t radius_idx{0}; radius_idx < fpt_accums.size(); ++radius_idx) {
-//     const auto& accum = fpt_accums[radius_idx];
-//     const auto& fpt_dist = accum.get_fpt_dist();
-//     int counts = accum.get_total_counts();
-//
-//     double r = dr * (radius_idx + 1);  // Midpoint radius for this bin
-//     double r_norm = r / a;
-//
-//     // Write individual F_r(t) probability distribution file for this radius
-//     std::string fpt_filename = fpt_dir + "/fpt_" + std::to_string(radius_idx + 1) + ".out";
-//     std::ofstream fpt_out(fpt_filename);
-//     fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r/a << "\n";
-//     fpt_out << "# 1) t , 2) F_r(t)\n";
-//     fpt_out << std::scientific << std::setprecision(15);
-//
-//     // Accumulate integrals for MFPT calculation
-//     double t0=0.0, t1=0.0, t2=0.0;
-//     for (size_t ibin=0; ibin<fpt_dist.size(); ++ibin) {
-//       double time = ((ibin+1) * dt) / tau_md;
-//       fpt_out << time << "\t" << frt << "\n";
-//
-//       std::vector<double> frt_norm(fpt_dist.size());
-//       double dt_md = dt / tau_md;
-//       frt_norm[ibin] = fpt_dist[ibin] / (counts * dt_md);
-//
-//       double frt = (counts > 0) ? normalized_frt[ibin] : 0.0;
-//
-//       t0 += frt * dt_md;                // Zeroth moment (normalization)
-//       t1 += time * frt * dt_md;         // First moment (mean)
-//       t2 += time * time * frt * dt_md;  // Second moment
-//     }
-//     fpt_out.close();
-//
-//     // Compute MFPT as <t> = t1 / t0
-//     double mfpt = (counts > 0 && t0 > 0) ? t1 / t0 : 0.0;
-//
-//     // Write summary entry to mfpt.dat
-//     mfpt_out << std::scientific << std::setprecision(15)
-//              << r_norm << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
-//   }
-//   mfpt_out.close();
-// }
 
 void write_fpt(const std::string& mfpt_file,
                const std::string& fpt_dir,
@@ -208,82 +149,13 @@ void write_fpt(const std::string& mfpt_file,
  * @param dt Time step between frames.
  * @return Vector of MFPTAccumulator objects with accumulated FPT data.
  */
-// std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame>& frames,
-//                                         double dr,
-//                                         double r_max,
-//                                         double dt) {
-//   size_t n_frames = frames.size();
-//   size_t num_atoms = frames[0].atoms.size();
-//   int radbins = static_cast<int>(std::ceil(r_max / dr));
-//   int max_lag_steps = static_cast<int>(n_frames - 1);
-//
-//   // Create one accumulator per radius threshold
-//   std::vector<FPTAccumulator> fpt_accums;
-//   for (int i{0}; i < radbins; ++i) {
-//     fpt_accums.emplace_back(max_lag_steps + 1);
-//   }
-//
-//   size_t total = n_frames;
-//   size_t done = 0;
-//
-//   // Loop over every possible starting frame (time origin t0)
-//   for (size_t t0{0}; t0 < n_frames; ++t0) {
-//     const Frame& frame_start = frames[t0];
-//
-//     // Record initial positions of all atoms at t0
-//     std::vector<double> ref_x(num_atoms), ref_y(num_atoms), ref_z(num_atoms);
-//     for (size_t atom_idx{0}; atom_idx < num_atoms; ++atom_idx) {
-//       ref_x[atom_idx] = frame_start.atoms[atom_idx].x;
-//       ref_y[atom_idx] = frame_start.atoms[atom_idx].y;
-//       ref_z[atom_idx] = frame_start.atoms[atom_idx].z;
-//     }
-//
-//     // Track first-passage state: whether each atom has crossed each radius
-//     std::vector<std::vector<bool>> crossed(radbins, std::vector<bool>(num_atoms, false));
-//
-//     // For each later frame after t0, check for first-passage events
-//     for (size_t t{t0 + 1}; t < n_frames; ++t) {
-//       const Frame& frame_current = frames[t];
-//       int lag_steps = static_cast<int>(t - t0);
-//
-//       for (size_t atom_idx{0}; atom_idx < num_atoms; ++atom_idx) {
-//         double dx = frame_current.atoms[atom_idx].x - ref_x[atom_idx];
-//         double dy = frame_current.atoms[atom_idx].y - ref_y[atom_idx];
-//         double dz = frame_current.atoms[atom_idx].z - ref_z[atom_idx];
-//         double dr2 = dx * dx + dy * dy + dz * dz;
-//
-//         for (int radius_idx{0}; radius_idx < radbins; ++radius_idx) {
-//           if (crossed[radius_idx][atom_idx]) continue;  // Already recorded
-//
-//           double current_r = dr * (radius_idx + 1);
-//           double current_r2 = current_r * current_r;
-//
-//           if (dr2 >= current_r2) {
-//             fpt_accums[radius_idx].accumulate(lag_steps, lag_steps);
-//             crossed[radius_idx][atom_idx] = true;
-//             break;  // Stop checking larger radii once the first is crossed
-//           }
-//         }
-//       }
-//     }
-//     if (++done % 10 == 0 || done == total) {
-//       print_progress_bar(done, total, 40, "MFPT", "origins");
-//     }
-//   }
-//
-//   // Finalize the probability distribution for each radius
-//   for (auto& accum : fpt_accums) {
-//     accum.finalize(dt);
-//   }
-//   return fpt_accums;
-// }
 
 std::vector<FPTAccumulator> compute_fpt(
     const std::vector<Frame>& frames,
     double dr,
     double r_max,
-    double dt)
-{
+    double dt) {
+
     size_t n_frames = frames.size();
     if (n_frames == 0) return {};
     size_t n_atoms = frames[0].atoms.size();
@@ -294,7 +166,7 @@ std::vector<FPTAccumulator> compute_fpt(
     // Prepare accumulators: one per radius threshold
     std::vector<FPTAccumulator> accumulators;
     for (int i = 0; i < n_bins_radius; ++i) {
-        accumulators.emplace_back(max_lag_steps + 1);
+      accumulators.emplace_back(max_lag_steps + 1);
     }
 
     size_t total_origins = n_bins_radius * n_frames; // total work = all origins across all radii
@@ -302,47 +174,47 @@ std::vector<FPTAccumulator> compute_fpt(
 
     // Loop over radius thresholds (distance epsilon)
     for (int radius_idx = 0; radius_idx < n_bins_radius; ++radius_idx) {
-        double epsilon = dr * (radius_idx + 1);
-        double epsilon2 = epsilon * epsilon;
+      double epsilon = dr * (radius_idx + 1);
+      double epsilon2 = epsilon * epsilon;
 
-        // Loop over all possible time origins t0
-        for (size_t t0 = 0; t0 < n_frames; ++t0) {
-            const Frame& frame_start = frames[t0];
+      // Loop over all possible time origins t0
+      for (size_t t0 = 0; t0 < n_frames; ++t0) {
+        const Frame& frame_start = frames[t0];
 
-            // Record initial positions of all atoms at t0
-            std::vector<double> x0(n_atoms), y0(n_atoms), z0(n_atoms);
-            for (size_t a = 0; a < n_atoms; ++a) {
-              x0[a] = frame_start.atoms[a].x;
-              y0[a] = frame_start.atoms[a].y;
-              z0[a] = frame_start.atoms[a].z;
-            }
-
-            // For each atom, find first passage time crossing epsilon
-            for (size_t atom_idx = 0; atom_idx < n_atoms; ++atom_idx) {
-              int first_crossing_lag = -1;
-              for (size_t t = t0 + 1; t < n_frames; ++t) {
-                const auto& atom = frames[t].atoms[atom_idx];
-                double dx = atom.x - x0[atom_idx];
-                double dy = atom.y - y0[atom_idx];
-                double dz = atom.z - z0[atom_idx];
-                double dist2 = dx*dx + dy*dy + dz*dz;
-
-                if (dist2 >= epsilon2) {
-                  first_crossing_lag = static_cast<int>(t - t0);
-                  break;
-                }
-              }
-              if (first_crossing_lag >= 0) {
-                accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
-              }
-            }
-
-            // Update cumulative progress and print progress bar once every 10 or at end
-            ++done_origins;
-            if (done_origins % 10 == 0 || done_origins == total_origins) {
-                print_progress_bar(done_origins, total_origins, 40, "MFPT origins");
-            }
+        // Record initial positions of all atoms at t0
+        std::vector<double> x0(n_atoms), y0(n_atoms), z0(n_atoms);
+        for (size_t a = 0; a < n_atoms; ++a) {
+          x0[a] = frame_start.atoms[a].x;
+          y0[a] = frame_start.atoms[a].y;
+          z0[a] = frame_start.atoms[a].z;
         }
+
+        // For each atom, find first passage time crossing epsilon
+        for (size_t atom_idx = 0; atom_idx < n_atoms; ++atom_idx) {
+          int first_crossing_lag = -1;
+          for (size_t t = t0 + 1; t < n_frames; ++t) {
+            const auto& atom = frames[t].atoms[atom_idx];
+            double dx = atom.x - x0[atom_idx];
+            double dy = atom.y - y0[atom_idx];
+            double dz = atom.z - z0[atom_idx];
+            double dist2 = dx*dx + dy*dy + dz*dz;
+
+            if (dist2 >= epsilon2) {
+              first_crossing_lag = static_cast<int>(t - t0);
+              break;
+            }
+          }
+          if (first_crossing_lag >= 0) {
+            accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
+          }
+        }
+
+        // Update cumulative progress and print progress bar once every 10 or at end
+        ++done_origins;
+        if (done_origins % 10 == 0 || done_origins == total_origins) {
+          print_progress_bar(done_origins, total_origins, 40, "MFPT origins");
+        }
+      }
     }
 
     std::cout << std::endl; // End the progress bar line
@@ -351,8 +223,7 @@ std::vector<FPTAccumulator> compute_fpt(
     for (auto& accum : accumulators) {
       accum.finalize(dt);
     }
-
-    return accumulators;
+  return accumulators;
 }
 
 
