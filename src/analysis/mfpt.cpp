@@ -42,18 +42,33 @@ void FPTAccumulator::accumulate(int bin_index, double fpt) {
 
 // Finalize probability distribution F_r(t) by converting counts to probabilities
 // using the total number of first-passage events recorded (total_counts).
+// void FPTAccumulator::finalize(double dt) {
+//   if (finalized) return; // Prevent double-finalization
+//
+//   fpt_dist.resize(counts.size(), 0.0);
+//   total_counts = 0;
+//   for (int c : counts) total_counts += c; // Sum over all lag bins
+//
+//   if (total_counts > 0) {
+//     for (size_t i{0}; i < counts.size(); ++i) {
+//       fpt_dist[i] = counts[i] / (total_counts * dt);  // Normalize to PDF
+//     }
+//   }
+//   finalized = true;
+// }
+
 void FPTAccumulator::finalize(double dt) {
   if (finalized) return; // Prevent double-finalization
 
-  // fpt_dist.resize(counts.size(), 0.0);
-  // total_counts = 0;
-  // for (int c : counts) total_counts += c; // Sum over all lag bins
-  //
-  // if (total_counts > 0) {
-  //   for (size_t i{0}; i < counts.size(); ++i) {
-  //     fpt_dist[i] = counts[i] / (total_counts * dt);  // Normalize to PDF
-  //   }
-  // }
+  fpt_dist.resize(counts.size(), 0.0);
+  total_counts = 0;
+  for (int c : counts) total_counts += c; // Sum over all lag bins
+
+  // Just copy raw counts into fpt_dist (no division)
+  for (size_t i{0}; i < counts.size(); ++i) {
+    fpt_dist[i] = static_cast<double>(counts[i]);
+  }
+
   finalized = true;
 }
 
@@ -155,7 +170,6 @@ std::vector<FPTAccumulator> compute_fpt(
     double dr,
     double r_max,
     double dt) {
-
     size_t n_frames = frames.size();
     if (n_frames == 0) return {};
     size_t n_atoms = frames[0].atoms.size();
