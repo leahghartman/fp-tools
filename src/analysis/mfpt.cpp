@@ -81,10 +81,17 @@ void write_fpt(const std::string& mfpt_file,
                const std::string& fpt_dir,
                const std::vector<FPTAccumulator>& fpt_accums,
                double dr,
-               double dt) {
+               double dt,
+               double box_volume,
+               size_t total_atoms) {
   std::ofstream mfpt_out(mfpt_file);
   mfpt_out << "# mean first passage time T(r) vs r\n";
   mfpt_out << "# 1) r , 2) MFPT , 3) t1 , 4) t2 , 5) counts\n";
+
+  double density = static_cast<double>(total_atoms) / box_volume;
+  double a = std::cbrt(3.0 / (4.0 * M_PI * density));
+  double tau_md = a / std::sqrt(0.9);
+
 
   // Loop through all radius thresholds
   for (size_t radius_idx{0}; radius_idx < fpt_accums.size(); ++radius_idx) {
@@ -93,24 +100,27 @@ void write_fpt(const std::string& mfpt_file,
     int counts = accum.get_total_counts();
 
     double r = dr * (radius_idx + 1);  // Midpoint radius for this bin
+    double r_norm = r / a;
 
     // Write individual F_r(t) probability distribution file for this radius
     std::string fpt_filename = fpt_dir + "/fpt_" + std::to_string(radius_idx + 1) + ".out";
     std::ofstream fpt_out(fpt_filename);
-    fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r << "\n";
+    fpt_out << "# Probability distribution F_r(t) of first passages at distance r = " << r/a << "\n";
     fpt_out << "# 1) t , 2) F_r(t)\n";
     fpt_out << std::scientific << std::setprecision(15);
 
     // Accumulate integrals for MFPT calculation
     double t0=0.0, t1=0.0, t2=0.0;
     for (size_t ibin=0; ibin<fpt_dist.size(); ++ibin) {
-      double time = (ibin+1) * dt;
+      double time = ((ibin+1) * dt) / tau_md;
       double frt = fpt_dist[ibin];
       fpt_out << time << "\t" << frt << "\n";
 
-      t0 += frt * dt;                // Zeroth moment (normalization)
-      t1 += time * frt * dt;         // First moment (mean)
-      t2 += time * time * frt * dt;  // Second moment
+      double dt_md = dt / tau_md;
+
+      t0 += frt * dt_md;                // Zeroth moment (normalization)
+      t1 += time * frt * dt_md;         // First moment (mean)
+      t2 += time * time * frt * dt_md;  // Second moment
     }
     fpt_out.close();
 
@@ -119,7 +129,7 @@ void write_fpt(const std::string& mfpt_file,
 
     // Write summary entry to mfpt.dat
     mfpt_out << std::scientific << std::setprecision(15)
-             << r << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
+             << r_norm << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
   }
   mfpt_out.close();
 }
@@ -245,30 +255,29 @@ std::vector<FPTAccumulator> compute_fpt(
             // Record initial positions of all atoms at t0
             std::vector<double> x0(n_atoms), y0(n_atoms), z0(n_atoms);
             for (size_t a = 0; a < n_atoms; ++a) {
-                x0[a] = frame_start.atoms[a].x;
-                y0[a] = frame_start.atoms[a].y;
-                z0[a] = frame_start.atoms[a].z;
+              x0[a] = frame_start.atoms[a].x;
+              y0[a] = frame_start.atoms[a].y;
+              z0[a] = frame_start.atoms[a].z;
             }
 
             // For each atom, find first passage time crossing epsilon
             for (size_t atom_idx = 0; atom_idx < n_atoms; ++atom_idx) {
-                int first_crossing_lag = -1;
-                for (size_t t = t0 + 1; t < n_frames; ++t) {
-                    const auto& atom = frames[t].atoms[atom_idx];
-                    double dx = atom.x - x0[atom_idx];
-                    double dy = atom.y - y0[atom_idx];
-                    double dz = atom.z - z0[atom_idx];
-                    double dist2 = dx*dx + dy*dy + dz*dz;
+              int first_crossing_lag = -1;
+              for (size_t t = t0 + 1; t < n_frames; ++t) {
+                const auto& atom = frames[t].atoms[atom_idx];
+                double dx = atom.x - x0[atom_idx];
+                double dy = atom.y - y0[atom_idx];
+                double dz = atom.z - z0[atom_idx];
+                double dist2 = dx*dx + dy*dy + dz*dz;
 
-                    if (dist2 >= epsilon2) {
-                        first_crossing_lag = static_cast<int>(t - t0);
-                        break;
-                    }
+                if (dist2 >= epsilon2) {
+                  first_crossing_lag = static_cast<int>(t - t0);
+                  break;
                 }
-
-                if (first_crossing_lag >= 0) {
-                    accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
-                }
+              }
+              if (first_crossing_lag >= 0) {
+                accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
+              }
             }
 
             // Update cumulative progress and print progress bar once every 10 or at end
@@ -283,7 +292,7 @@ std::vector<FPTAccumulator> compute_fpt(
 
     // Finalize the probability distribution for each radius
     for (auto& accum : accumulators) {
-        accum.finalize(dt);
+      accum.finalize(dt);
     }
 
     return accumulators;
@@ -353,16 +362,6 @@ void compute_dofr(const std::string& mfpt_file, const std::string& output_file) 
     outfile << r_mid << " " << derivative << "\n";
   }
 
-  // for (size_t i = 1; i < r_vals.size(); ++i) {
-  //   double r1 = r_vals[i-1], t1 = t_vals[i-1];
-  //   double r2 = r_vals[i],   t2 = t_vals[i];
-  //
-  //   if (r1 <= 0 || r2 <= 0 || t1 <= 0 || t2 <= 0) continue;
-  //
-  //   double derivative = (std::log(t2) - std::log(t1)) / (std::log(r2) - std::log(r1));
-  //   double r_mid = 0.5 * (r1 + r2);
-  //   outfile << r_mid << " " << derivative << "\n";
-  // }
   outfile.close();
 }
 

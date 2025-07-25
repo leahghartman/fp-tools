@@ -129,7 +129,9 @@ void write_fpt(const std::string& mfpt_file,
                const std::string& fpt_dir,
                const std::vector<FPTAccumulator>& mfpt_accums,
                double dr,
-               double dt);
+               double dt,
+               double box_volume,
+               size_t total_atoms);
 
 /**
  * @brief Plot the mean first-passage time (MFPT) as a function of distance.

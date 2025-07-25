@@ -158,6 +158,16 @@ int main(int argc, char** argv) {
     }
     ++frame_count;
   }
+
+  double box_volume = 1.0;
+  if (!frames.empty()) {
+    const auto& bounds = frames[0].box_bounds;
+    double lx = bounds[0][1] - bounds[0][0];
+    double ly = bounds[1][1] - bounds[1][0];
+    double lz = bounds[2][1] - bounds[2][0];
+    box_volume = lx * ly * lz;
+  }
+
   
   //logger.newline();
   logger.arrow("Trajectory parsing completed successfully!");
@@ -274,16 +284,6 @@ int main(int argc, char** argv) {
 
     logger.rdf_info(dr, num_bins, r_max, pairs);
 
-    // --- Compute box volume from the first frame
-    double box_volume = 1.0;
-    if (!frames.empty()) {
-      const auto& bounds = frames[0].box_bounds;
-      double lx = bounds[0][1] - bounds[0][0];
-      double ly = bounds[1][1] - bounds[1][0];
-      double lz = bounds[2][1] - bounds[2][0];
-      box_volume = lx * ly * lz;
-    }
-
     // --- Ensure atom types exist, or default to "1"
     bool has_missing_types = frames[0].atoms.empty() || frames[0].atoms[0].type.empty();
     if (has_missing_types) {
@@ -370,7 +370,7 @@ int main(int argc, char** argv) {
     // Compute and write MFPT data
     std::vector<FPTAccumulator> fpt_accums = compute_fpt(frames, dr, r_max, dt);
     logger.arrow("Writing MFPT data to " + mfpt_dir + "...");
-    write_fpt(mfpt_file, fpt_dir, fpt_accums, dr, dt);
+    write_fpt(mfpt_file, fpt_dir, fpt_accums, dr, dt, box_volume, frames[0].atomnum);
 
     // Compute D(r)
     logger.arrow("Computing D(r) from MFPT...");
@@ -420,7 +420,7 @@ int main(int argc, char** argv) {
     if (!plot_format.empty()) {
       logger.arrow("Generating correlation plot (" + plot_format + ")...");
       //corr_accum.plot(corr_file, corr_dir, plot_format);
-      logger.arrow("Plot successfully saved to " + corr_dir + "/!");
+    logger.arrow("Plot successfully saved to " + corr_dir + "/!");
     }
     logger.newline();
   }
