@@ -126,9 +126,11 @@ void write_fpt(const std::string& mfpt_file,
     double dtloc = 2.01 * dt / tau_md;
 
     for (size_t ibin = 0; ibin < fpt_dist.size(); ++ibin) {
-      double time = ((ibin + 1) * dt) / tau_md;
+      /* double time = ((ibin + 1) * dt) / tau_md; */
+      double time = (ibin + 1) * dtloc / tau_md;
       double raw_frt = fpt_dist[ibin];
-      double frt = (counts > 0) ? raw_frt / (counts * dtloc) : 0.0;
+      double frt = (counts > 0) ? raw_frt / (counts * dtloc / tau_md) : 0.0;
+      /* double frt = (counts > 0) ? raw_frt / (counts * dtloc) : 0.0; */
 
       fpt_out << time << "\t" << frt << "\n";
 
@@ -219,7 +221,11 @@ std::vector<FPTAccumulator> compute_fpt(
             }
           }
           if (first_crossing_lag >= 0) {
-            accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
+            double dtloc = 2.01 * dt;
+            int ibin = static_cast<int>((first_crossing_lag * dt) / dtloc);
+            accumulators[radius_idx].accumulate(ibin, dt * first_crossing_lag);
+
+            //accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
           }
         }
 
