@@ -167,18 +167,18 @@ void write_fpt(const std::string& mfpt_file,
     fpt_out << std::scientific << std::setprecision(15);
 
     double t0 = 0.0, t1 = 0.0, t2 = 0.0;
-    double dt_md = dt / tau_md;
+    double dtloc = 2.01 * dt / tau_md;
 
     for (size_t ibin = 0; ibin < fpt_dist.size(); ++ibin) {
       double time = ((ibin + 1) * dt) / tau_md;
       double raw_frt = fpt_dist[ibin];
-      double frt = (counts > 0) ? raw_frt / (counts * dt_md) : 0.0;
+      double frt = (counts > 0) ? raw_frt / (counts * dtloc) : 0.0;
 
       fpt_out << time << "\t" << frt << "\n";
 
-      t0 += frt * dt_md;
-      t1 += time * frt * dt_md;
-      t2 += time * time * frt * dt_md;
+      t0 += frt * dtloc;
+      t1 += time * frt * dtloc;
+      t2 += time * time * frt * dtloc;
     }
     fpt_out.close();
 
@@ -189,7 +189,6 @@ void write_fpt(const std::string& mfpt_file,
   }
   mfpt_out.close();
 }
-
 
 
 // =============================================================================
