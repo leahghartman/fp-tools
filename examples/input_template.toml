@@ -3,7 +3,7 @@
   coord_type      = "unwrapped"
   start_frame     = 0
   end_frame       = 3999
-  frame_interval  = 1
+  frame_interval  = 10
 
 [output]
   path            = "output"
@@ -32,7 +32,7 @@
     ]
 
   [analysis.rdf]
-    enabled     = true
+    enabled     = false
     num_bins    = 200
     r_max       = 5
     pairs       = [["3", "3"]]
@@ -56,13 +56,13 @@
     plot_format = "svg"
 
   [analysis.correlations]
-    enabled = false
-    plot_format = "png"
+    enabled = true
+    plot_format = "svg"
     
     # Built-in correlation functions
-    builtin = ["vacf"]
+    #builtin =
 
     # Generic pairwise correlations
     custom = [
-      { name = "some_corr", files = ["something_a.dat", "something_b.dat"]},#, columns = [2, 2] },
+      { name = "sine_corr", files = ["sine_wave.dat"], columns = [2] },
     ]
