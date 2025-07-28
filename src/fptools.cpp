@@ -419,8 +419,8 @@ int main(int argc, char** argv) {
     // Optionally plot correlation results using configured plot format
     if (!plot_format.empty()) {
       logger.arrow("Generating correlation plot (" + plot_format + ")...");
-      //corr_accum.plot(corr_file, corr_dir, plot_format);
-    logger.arrow("Plot successfully saved to " + corr_dir + "/!");
+      corr_accum.plot(corr_dir, plot_format);
+      logger.arrow("Plot successfully saved to " + corr_dir + "/!");
     }
     logger.newline();
   }

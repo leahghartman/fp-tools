@@ -144,42 +144,6 @@ CorrAccumulator compute_builtin(const CorrConfig& cfg,
     }
     acc.store_result("vacf", vacf);
   }
-
-  // ----------------------
-  // VCF (velocity correlation function between different atoms at same time)
-  // ----------------------
-  // if (cfg.builtins.contains("vcf")) {
-  //   std::vector<double> vcf(num_frames, 0.0);
-  //
-  //   for (size_t t = 0; t < num_frames; ++t) {
-  //     double sum = 0.0;
-  //     size_t count = 0;
-  //
-  //     for (size_t i = 0; i < num_atoms; ++i) {
-  //       for (size_t j = i + 1; j < num_atoms; ++j) {
-  //         const auto& v0 = frames[t].vx[i];
-  //         const auto& v1 = frames[t].vx[j];
-  //         const auto& u0 = frames[t].vy[i];
-  //         const auto& u1 = frames[t].vy[j];
-  //         const auto& w0 = frames[t].vz[i];
-  //         const auto& w1 = frames[t].vz[j];
-  //
-  //         double dot = v0 * v1 + u0 * u1 + w0 * w1;
-  //         sum += dot;
-  //         count++;
-  //       }
-  //     }
-  //
-  //     if (count > 0) vcf[t] = sum / count;
-  //   }
-  //
-  //   if (cfg.normalize && vcf[0] != 0.0) {
-  //     for (auto& v : vcf) v /= vcf[0];
-  //   }
-  //
-  //   acc.store_result("vcf", vcf);
-  // }
-
   return acc;
 }
 
@@ -196,18 +160,25 @@ CorrAccumulator compute_correlations(const CorrConfig& cfg,
 
   // --- Custom file/column pair correlations ---
   for (const auto& pair : cfg.custom) {
-    auto a = read_column(pair.files[0], pair.columns[0]);
-    auto b = read_column(pair.files[1], pair.columns[1]);
+    std::vector<double> a, b;
+
+    if (pair.files.size() == 1) {
+      // Autocorrelation: use same file and column for both
+      a = read_column(pair.files[0], pair.columns[0]);
+      b = a;
+    } else {
+      a = read_column(pair.files[0], pair.columns[0]);
+      b = read_column(pair.files[1], pair.columns[1]);
+    }
 
     if (cfg.subtract_mean) {
       subtract_mean(a);
-      subtract_mean(b);
+      // Only subtract mean from b if it's not a reference to a
+      if (&a != &b) subtract_mean(b);
     }
-
     auto result = correlate(a, b, cfg);
     acc.store_result(pair.name, result);
   }
-
   return acc;
 }
 
@@ -223,3 +194,19 @@ void CorrAccumulator::write(const std::string& output_dir) const {
       }
     }
 }
+
+void CorrAccumulator::plot(const std::string& output_dir,
+                           const std::string& format) const {
+  namespace fs = std::filesystem;
+  fs::path abs_output_dir = fs::absolute(output_dir);
+  const std::string script_path = std::string(SOURCE_DIR) + "/src/fp_plot.py";
+
+  std::string command = "python3 " + script_path + " corr " +
+                        abs_output_dir.string() + " " + format;
+
+  int result = std::system(command.c_str());
+  if (result != 0) {
+    std::cerr << "Warning: Failed to run correlation plotting script.\n";
+  }
+}
+

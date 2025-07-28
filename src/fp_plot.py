@@ -105,6 +105,24 @@ def rdf_plot(input_files, labels, output_dir, output_format="png"):
     plot_path = os.path.join(output_dir, f"{base_name}.{output_format}")
     plt.savefig(plot_path, format=output_format)
 
+def plot_corr(filepath, output_dir, output_format="png"):
+    """Plot a correlation function from a .dat file."""
+    data = np.loadtxt(filepath, comments="#")
+    lag, corr = data[:, 0], data[:, 1]
+
+    plt.figure(figsize=(6, 4))
+    plt.plot(lag, corr, linestyle='-', color='tab:blue', label=os.path.basename(filepath).replace(".dat", ""))
+    plt.xlabel("Lag")
+    plt.ylabel("Correlation")
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend()
+
+    base_name = os.path.splitext(os.path.basename(filepath))[0]
+    plot_path = os.path.join(output_dir, f"{base_name}.{output_format}")
+    plt.tight_layout()
+    plt.savefig(plot_path, format=output_format)
+    plt.close()
+
 def main():
     def usage():
         print("Usage:")
@@ -112,6 +130,8 @@ def main():
         print("  fp_plot.py mfpt <mfpt_file> <output_dir> [format]")
         print("  fp_plot.py dlog <log_derivative_file> <output_dir> [format]")
         print("  fp_plot.py rdf <output_dir> <output_name> <data_files_csv> [format]")
+        print("  fp_plot.py corr <output_dir> <format>")
+
 
     if len(sys.argv) < 2:
         usage()
@@ -146,6 +166,14 @@ def main():
         files = sys.argv[2:-2:2]
         labels = sys.argv[3:-2:2]
         rdf_plot(files, labels, output_dir, output_format)
+
+    elif cmd == "corr" and len(args) >= 2:
+        input_dir = args[0]
+        output_format = args[1]
+        corr_files = sorted(f for f in os.listdir(input_dir) if f.endswith("corr.dat"))
+        for file in corr_files:
+            plot_corr(os.path.join(input_dir, file), input_dir, output_format)
+
 
     else:
         print("Invalid command or insufficient arguments.\n")
