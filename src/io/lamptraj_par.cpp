@@ -70,9 +70,6 @@ bool LAMMPSTrajectory::next_frame(Frame& frame) {
 
   // Ensure required columns exist
   bool has_id = column_index.count("id") > 0;
-  if (!has_id) {
-    std::cout << "Warning: 'id' column missing — assigning sequential atom IDs.\n";
-  }
   int id_idx = has_id ? column_index["id"] : -1;
   if (!(
         column_index.count("xu") || column_index.count("xsu") ||
