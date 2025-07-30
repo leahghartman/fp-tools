@@ -28,8 +28,6 @@ struct InputConfig {
 // --- Output Configuration ---
 struct OutputConfig {
   std::string path{"output"};  //
-  int verbosity{1};               // Verbosity level: 0 = silent, 1 = normal
-  int status_interval{10};        // Interval (in frames) to print status/progress updates
 };
 
 struct PropertiesConfig {
@@ -61,7 +59,7 @@ struct RDFConfig {
   double r_max{};
   int num_bins{};
   std::vector<std::vector<std::string>> pairs{};
-  std::vector<std::vector<std::vector<std::string>>> curves{};
+  std::vector<std::vector<Curve>> curves{};
   std::string plot_format{};
 };
 

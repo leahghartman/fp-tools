@@ -58,6 +58,7 @@ public:
    * @brief Finalize the MSD by averaging accumulated displacements per lag.
    */
   void finalize();
+  void clear();
 
   /**
    * @brief Write the finalized MSD data to a file.
@@ -77,6 +78,7 @@ public:
             const std::string& output_dir,
             const std::string& format) const;
   //void plot(const std::string& output_file, const std::string& output_dir, const std::string& format) const;
+  void merge_group(const MSDAccumulator& other, int group_index);
   
   /**
    * @brief Get the finalized MSD values.

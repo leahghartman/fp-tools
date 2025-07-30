@@ -3,31 +3,28 @@
   coord_type      = "unwrapped"
   start_frame     = 0
   end_frame       = 3999
-  frame_interval  = 10
+  frame_interval  = 1
 
 [output]
   path            = "output"
 
 [properties]
-  type = "unknown"
-  units = ""
-  density = 1
   dt = 0.1
 
 [analysis]
   
   [analysis.msd]
-    enabled     = false
+    enabled     = true
     max_lag     = 2000
-    groups      = [["C"], ["O"], ["O", "C"]]
+    groups      = [["1"]]
     plot_format = "svg"
     curves = [
-      [  # Plot 1
-        { types = ["C"], label = "C" },
-        { types = ["2"], label = "2" }
-      ],
+      # [  # Plot 1
+      #   { types = ["2"], label = "2" },
+      #   #{ types = ["3"], label = "3" },
+      # ],
       [  # Plot 2
-        { types = ["3"], label = "3" }
+        { types = ["1"], label = "1" }
       ]
     ]
 
@@ -35,12 +32,12 @@
     enabled     = false
     num_bins    = 200
     r_max       = 5
-    pairs       = [["3", "3"]]
+    pairs       = [["3", "3"], ["1", "2"]]
     plot_format = "svg"
     curves = [
       [  # Plot 1
         { types = ["1", "2"], label = "1-2" },
-        { types = ["1"], label = "1" }
+        { types = ["3", "3"], label = "3-3" }
       ],
       [  # Plot 2
         { types = ["1", "2"], label = "1-2" }
@@ -56,13 +53,13 @@
     plot_format = "svg"
 
   [analysis.correlations]
-    enabled = true
+    enabled = false
     plot_format = "svg"
     
     # Built-in correlation functions
-    #builtin =
+    builtin = ["vacf"]
 
     # Generic pairwise correlations
-    custom = [
-      { name = "sine_corr", files = ["sine_wave.dat"], columns = [2] },
-    ]
+    # custom = [
+    #   { name = "sine_corr", files = ["sine_wave.dat"], columns = [2] },
+    # ]
