@@ -86,8 +86,6 @@ int main(int argc, char **argv) {
   std::string mfpt_dir = output_dir + "/mfpt";
   std::string corr_dir = output_dir + "/corr";
 
-  int status_interval = config.output.status_interval;
-
   // Create output directories silently, error if fail
   if (!fs::exists(output_dir) && !fs::create_directories(output_dir)) {
     std::cerr << "Error: Could not create output directory: " << output_dir
@@ -186,7 +184,6 @@ int main(int argc, char **argv) {
   // ----------------------------------------
   // ---  Prepare for output and logging  ---
   // ----------------------------------------
-  int verbosity{config.output.verbosity};
 
   // ------------------------------------
   // ---  Perform requested analyses  ---
