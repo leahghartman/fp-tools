@@ -42,22 +42,8 @@ void FPTAccumulator::accumulate(int bin_index, double fpt) {
 }
 
 // Finalize probability distribution F_r(t) by converting counts to
-// probabilities using the total number of first-passage events recorded
-// (total_counts). void FPTAccumulator::finalize(double dt) {
-//   if (finalized) return; // Prevent double-finalization
-//
-//   fpt_dist.resize(counts.size(), 0.0);
-//   total_counts = 0;
-//   for (int c : counts) total_counts += c; // Sum over all lag bins
-//
-//   if (total_counts > 0) {
-//     for (size_t i{0}; i < counts.size(); ++i) {
-//       fpt_dist[i] = counts[i] / (total_counts * dt);  // Normalize to PDF
-//     }
-//   }
-//   finalized = true;
-// }
-
+// probabilities using the total number of first-passage events
+// recorded(total_counts).
 void FPTAccumulator::finalize(double dt) {
   if (finalized)
     return; // Prevent double-finalization
@@ -67,11 +53,11 @@ void FPTAccumulator::finalize(double dt) {
   for (int c : counts)
     total_counts += c; // Sum over all lag bins
 
-  // Just copy raw counts into fpt_dist (no division)
-  for (size_t i{0}; i < counts.size(); ++i) {
-    fpt_dist[i] = static_cast<double>(counts[i]);
+  if (total_counts > 0) {
+    for (size_t i{0}; i < counts.size(); ++i) {
+      fpt_dist[i] = counts[i] / (total_counts * dt); // Normalize to PDF
+    }
   }
-
   finalized = true;
 }
 
@@ -115,39 +101,35 @@ void write_fpt(const std::string &mfpt_file, const std::string &fpt_dir,
     int counts = accum.get_total_counts();
 
     double r = dr * (radius_idx + 1);
-    double r_norm = r / a;
 
     std::string fpt_filename =
         fpt_dir + "/fpt_" + std::to_string(radius_idx + 1) + ".out";
     std::ofstream fpt_out(fpt_filename);
     fpt_out << "# Probability distribution F_r(t) of first passages at "
                "distance r = "
-            << r_norm << "\n";
+            << r<< "\n";
     fpt_out << "# 1) t , 2) F_r(t)\n";
     fpt_out << std::scientific << std::setprecision(15);
 
+    // Accumulate integrals for MFPT calculation
     double t0 = 0.0, t1 = 0.0, t2 = 0.0;
-    double dtloc = 2.01 * dt / tau_md;
-
     for (size_t ibin = 0; ibin < fpt_dist.size(); ++ibin) {
-      /* double time = ((ibin + 1) * dt) / tau_md; */
-      double time = (ibin + 1) * dtloc / tau_md;
-      double raw_frt = fpt_dist[ibin];
-      double frt = (counts > 0) ? raw_frt / (counts * dtloc / tau_md) : 0.0;
-      /* double frt = (counts > 0) ? raw_frt / (counts * dtloc) : 0.0; */
-
+      double time = (ibin + 1) * dt;
+      double frt = fpt_dist[ibin];
       fpt_out << time << "\t" << frt << "\n";
 
-      t0 += frt * dtloc;
-      t1 += time * frt * dtloc;
-      t2 += time * time * frt * dtloc;
+      t0 += frt * dt;               // Zeroth moment
+      t1 += time * frt * dt;        // First moment (mean)
+      t2 += time * time * frt * dt; // Second moment
     }
     fpt_out.close();
 
+    // Compute MFPT as <t> = t1/t0
     double mfpt = (counts > 0 && t0 > 0) ? t1 / t0 : 0.0;
 
-    mfpt_out << std::scientific << std::setprecision(15) << r_norm << "\t"
-             << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
+    // Write summary entry to mfpt.dat
+    mfpt_out << std::scientific << std::setprecision(15) 
+      << r << "\t" << mfpt << "\t" << t1 << "\t" << t2 << "\t" << counts << "\n";
   }
   mfpt_out.close();
 }
@@ -173,10 +155,7 @@ void write_fpt(const std::string &mfpt_file, const std::string &fpt_dir,
 std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame> &frames,
                                         double dr, double r_max, double dt) {
   size_t n_frames = frames.size();
-  if (n_frames == 0)
-    return {};
   size_t n_atoms = frames[0].atoms.size();
-
   int n_bins_radius = static_cast<int>(std::ceil(r_max / dr));
   int max_lag_steps = static_cast<int>(n_frames - 1);
 
@@ -223,9 +202,8 @@ std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame> &frames,
           }
         }
         if (first_crossing_lag >= 0) {
-          double dtloc = 2.01 * dt;
-          int ibin = static_cast<int>((first_crossing_lag * dt) / dtloc);
-          accumulators[radius_idx].accumulate(ibin, dt * first_crossing_lag);
+          int ibin = static_cast<int>(first_crossing_lag * dt);
+          accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
 
           // accumulators[radius_idx].accumulate(first_crossing_lag, dt *
           // first_crossing_lag);
@@ -249,6 +227,76 @@ std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame> &frames,
   }
   return accumulators;
 }
+
+// std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame>& frames,
+//                                         double dr,
+//                                         double r_max,
+//                                         double dt) {
+//   size_t n_frames = frames.size();
+//   size_t num_atoms = frames[0].atoms.size();
+//   int radbins = static_cast<int>(std::ceil(r_max / dr));
+//   int max_lag_steps = static_cast<int>(n_frames - 1);
+//
+//   // Create one accumulator per radius threshold
+//   std::vector<FPTAccumulator> fpt_accums;
+//   for (int i{0}; i < radbins; ++i) {
+//     fpt_accums.emplace_back(max_lag_steps + 1);
+//   }
+//
+//   size_t total = n_frames;
+//   size_t done = 0;
+//
+//   // Loop over every possible starting frame (time origin t0)
+//   for (size_t t0{0}; t0 < n_frames; ++t0) {
+//     const Frame& frame_start = frames[t0];
+//
+//     // Record initial positions of all atoms at t0
+//     std::vector<double> ref_x(num_atoms), ref_y(num_atoms), ref_z(num_atoms);
+//     for (size_t atom_idx{0}; atom_idx < num_atoms; ++atom_idx) {
+//       ref_x[atom_idx] = frame_start.atoms[atom_idx].x;
+//       ref_y[atom_idx] = frame_start.atoms[atom_idx].y;
+//       ref_z[atom_idx] = frame_start.atoms[atom_idx].z;
+//     }
+//
+//     // Track first-passage state: whether each atom has crossed each radius
+//     std::vector<std::vector<bool>> crossed(radbins, std::vector<bool>(num_atoms, false));
+//
+//     // For each later frame after t0, check for first-passage events
+//     for (size_t t{t0 + 1}; t < n_frames; ++t) {
+//       const Frame& frame_current = frames[t];
+//       int lag_steps = static_cast<int>(t - t0);
+//
+//       for (size_t atom_idx{0}; atom_idx < num_atoms; ++atom_idx) {
+//         double dx = frame_current.atoms[atom_idx].x - ref_x[atom_idx];
+//         double dy = frame_current.atoms[atom_idx].y - ref_y[atom_idx];
+//         double dz = frame_current.atoms[atom_idx].z - ref_z[atom_idx];
+//         double dr2 = dx * dx + dy * dy + dz * dz;
+//
+//         for (int radius_idx{0}; radius_idx < radbins; ++radius_idx) {
+//           if (crossed[radius_idx][atom_idx]) continue;  // Already recorded
+//
+//           double current_r = dr * (radius_idx + 1);
+//           double current_r2 = current_r * current_r;
+//
+//           if (dr2 >= current_r2) {
+//             fpt_accums[radius_idx].accumulate(lag_steps, lag_steps);
+//             crossed[radius_idx][atom_idx] = true;
+//             break;  // Stop checking larger radii once the first is crossed
+//           }
+//         }
+//       }
+//     }
+//     if (++done % 1 == 0 || done == total) {
+//       print_progress_bar(done, total, 40, "MFPT", "origins");
+//     }
+//   }
+//
+//   // Finalize the probability distribution for each radius
+//   for (auto& accum : fpt_accums) {
+//     accum.finalize(dt);
+//   }
+//   return fpt_accums;
+// }
 
 // =============================================================================
 // ===                         Plotting Utilities                            ===
