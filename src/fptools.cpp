@@ -62,15 +62,12 @@ std::string infer_format(const std::string &filename) {
     return "xyz";
   if (filename.ends_with(".lammpstrj") || filename.ends_with(".dump"))
     return "lammps";
-  throw std::runtime_error(
-      "Unrecognized file format: " + filename +
-      "\nSupported formats are: XDATCAR (vasp), .xyz, .lammpstrj, .dump");
 }
 
 int main(int argc, char **argv) {
   // Check for required configuration call format
   if (argc < 2) {
-    std::cerr << "Usage: fptools <config.yaml>\n";
+    std::cerr << "Usage: fptools <config.toml>\n";
     return 1;
   }
 
@@ -80,20 +77,21 @@ int main(int argc, char **argv) {
   std::string config_file{argv[1]};
   Config config = parse_config(config_file);
 
+  // Name all of the possible analysis directories, but don't create them unless asked
   std::string output_dir = config.output.path;
   std::string msd_dir = output_dir + "/msd";
   std::string rdf_dir = output_dir + "/rdf";
   std::string mfpt_dir = output_dir + "/mfpt";
   std::string corr_dir = output_dir + "/corr";
 
-  // Create output directories silently, error if fail
+  // Create main output directory
   if (!fs::exists(output_dir) && !fs::create_directories(output_dir)) {
     std::cerr << "Error: Could not create output directory: " << output_dir
               << "\n";
     return 1;
   }
 
-  // Create a log file
+  // Create a log file that will contain everything the terminal does
   Logger logger(output_dir + "/run.log");
   gethostname(hostname, 1024);
 
@@ -285,7 +283,7 @@ int main(int argc, char **argv) {
     double dr = config.analysis.rdf.dr;
     int num_bins = config.analysis.rdf.num_bins;
     double r_max = config.analysis.rdf.r_max;
-    const auto& curve_sets = config.analysis.rdf.curves; 
+    const auto &curve_sets = config.analysis.rdf.curves;
     std::string plot_format = config.analysis.rdf.plot_format;
 
     std::string rdf_fig_dir = rdf_dir + "/fig";

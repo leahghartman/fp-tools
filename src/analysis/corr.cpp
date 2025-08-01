@@ -153,13 +153,6 @@ CorrAccumulator compute_builtin(const CorrConfig &cfg,
       vacf[lag] = vacf_accum[lag] / static_cast<double>(num_atoms);
     }
 
-    // Normalize if requested
-    if (cfg.normalize && vacf[0] != 0.0) {
-      for (auto &v : vacf) {
-        v /= vacf[0];
-      }
-    }
-
     acc.store_result("vacf", vacf);
   }
   return acc;

@@ -47,7 +47,7 @@ def plot_mfpt(mfpt_file, output_dir, output_format="png"):
             avg_time.append(float(parts[1]))
 
     plt.figure(figsize=(6, 4))
-    plt.plot(r, avg_time, linestyle='-', color='tab:blue')
+    plt.loglog(r, avg_time, linestyle='-', color='tab:blue')
     plt.xlabel(r"$r$")
     plt.ylabel("Mean First Passage Time (MFPT)")
     plt.grid(True, linestyle='--', alpha=0.3)

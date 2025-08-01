@@ -1,40 +1,44 @@
+# --------- Input Section ---------
 [input]
-  file            = "testgr2.dump"
-  coord_type      = "unwrapped"
-  start_frame     = 0
-  end_frame       = 3999
-  frame_interval  = 1
+  file            = "testgr2.dump"    # Path to trajectory file
+  coord_type      = "unwrapped"       # Coordinate type: "wrapped" or "unwrapped"
+  start_frame     = 0                 # First frame to include in analysis
+  end_frame       = 3999              # Last frame (inclusive)       
+  frame_interval  = 1                 # Use every Nth frame
 
 [output]
-  path            = "output"
+  path            = "output"          # Directory to save output files
 
 [properties]
-  dt = 0.1
+  dt = 0.1                     # Timestep between consecutive frames
 
+# --------- Analysis Configuration ---------
 [analysis]
   
+  # ---- Mean Squared Displacement (MSD) ----
   [analysis.msd]
-    enabled     = true
+    enabled     = false                # Maximum lag time to 
     max_lag     = 2000
-    groups      = [["1"]]
-    plot_format = "svg"
+    groups      = [["1"], ["2"], ["3"]]
+    plot_format = "svg"               # Output plot format
+
+    # Optional: Choose how many figures to output as well as what curves go on them
     curves = [
-      # [  # Plot 1
-      #   { types = ["2"], label = "2" },
-      #   #{ types = ["3"], label = "3" },
-      # ],
-      [  # Plot 2
-        { types = ["1"], label = "1" }
+      [  # Plot 1
+        { type = ["1"], label = "1" }
       ]
     ]
 
+  # ---- Radial Distribution Function (RDF) ----
   [analysis.rdf]
     enabled     = false
     num_bins    = 200
     r_max       = 5
     pairs       = [["3", "3"], ["1", "2"]]
     plot_format = "svg"
-    curves = [
+
+
+    figures = [
       [  # Plot 1
         { types = ["1", "2"], label = "1-2" },
         { types = ["3", "3"], label = "3-3" }
@@ -44,14 +48,16 @@
       ]
     ]
 
+  # ---- Mean First Passage Time (MFPT) / D(r) ----
   [analysis.mfpt]
-    enabled = false
+    enabled = true
     dt = 0.05
     dr = 0.01
     r_max = 4
     plot_dofr = true
     plot_format = "svg"
 
+  # ---- Correlation Functions ----
   [analysis.correlations]
     enabled = false
     plot_format = "svg"
@@ -60,6 +66,6 @@
     builtin = ["vacf"]
 
     # Generic pairwise correlations
-    # custom = [
-    #   { name = "sine_corr", files = ["sine_wave.dat"], columns = [2] },
-    # ]
+    custom = [
+      { name = "sine_corr", files = ["sine_wave.dat"], columns = [2] },
+    ]

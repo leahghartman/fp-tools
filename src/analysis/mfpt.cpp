@@ -202,11 +202,7 @@ std::vector<FPTAccumulator> compute_fpt(const std::vector<Frame> &frames,
           }
         }
         if (first_crossing_lag >= 0) {
-          int ibin = static_cast<int>(first_crossing_lag * dt);
           accumulators[radius_idx].accumulate(first_crossing_lag, dt * first_crossing_lag);
-
-          // accumulators[radius_idx].accumulate(first_crossing_lag, dt *
-          // first_crossing_lag);
         }
       }
 

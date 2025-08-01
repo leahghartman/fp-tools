@@ -234,21 +234,6 @@ MSDAccumulator compute_msd(const std::vector<Frame> &frames, int max_lag,
 
     std::size_t total = matched_trajectories.size();
 
-    int full_traj_count = 0;
-    for (const auto &[atom_id, traj] : atom_trajectories) {
-      if (!traj.empty() && traj[0].type == "1") {
-        if (traj.size() == frames.size()) {
-          full_traj_count++;
-        } else {
-          std::cout << "Atom " << atom_id
-                    << " has incomplete trajectory of length " << traj.size()
-                    << "\n";
-        }
-      }
-    }
-    std::cout << "Number of atoms with full trajectories of type 1: "
-              << full_traj_count << "\n";
-
 #ifdef USE_OMP
     std::atomic<int> processed(0);
 
